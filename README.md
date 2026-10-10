@@ -1,6 +1,6 @@
 # 🌐 ComfyUI-Qwen-Panorama
 
-Transform any single 2D photo into a seamless **360° Equirectangular VR Panorama** using **Qwen-Image 2.1** and the specialized **360 Panorama Maker LoRA** (`pano360_qwen21_edit_v1.safetensors` by Gogodr / Poly Haven). Includes an in-canvas interactive WebGL 360° VR viewer, Google Photo Sphere XMP metadata injection, native 2K spherical generation, seamless 4K upscaler, and dual execution modes (Turbo ~20s vs. Full Quality 2K).
+Transform any single 2D photo into a seamless **360° Equirectangular VR Panorama** (or synthesize completely from scratch via **Text-to-Panorama**) using **Qwen-Image 2.1** and the specialized **360 Panorama Maker LoRA** (`pano360_qwen21_edit_v1.safetensors` by Gogodr / Poly Haven). Includes an in-canvas interactive WebGL 360° VR viewer, Google Photo Sphere XMP metadata injection, native 2K spherical generation, seamless 4K upscaler, and dual execution modes (Turbo ~20s vs. Full Quality 2K).
 
 Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly under **7.0 GB peak VRAM**.
 
@@ -16,8 +16,10 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
 
 ## ✨ Features
 
-- **360 Panorama LoRA Spherical Backbone**: Powered by Gogodr's `pano360_qwen21_edit_v1.safetensors` (trained on Poly Haven CC0 HDRIs). Injects spherical projection geometry into Qwen-Image 2.1 to generate seamless 360° equirectangular panoramas with continuous horizons, seamless 360° boundaries, and consistent lighting matching the input photo.
-- **2D Photo to 360° World**: Feed in a single normal photo (placed in center foreground); the model synthetically invents the rest of the 360° world (sky above, ground below, behind you) matching exact lighting and atmosphere.
+- **Dual Modality: Image-to-Pano & Text-to-Pano**:
+  - **🖼️ Image-to-Panorama (I2I)**: Supply a single 2D reference photo; the model anchors it at center ($0^\circ$ yaw) and invents the surrounding 360° environment matching exact lighting and atmosphere.
+  - **✍️ Pure Text-to-Panorama (T2I)**: Generate rich, photorealistic 360° VR worlds completely from text prompts without any input images (simply bypass `Load Reference Photo` with `Ctrl + M`).
+- **360 Panorama LoRA Spherical Backbone**: Powered by Gogodr's `pano360_qwen21_edit_v1.safetensors` (trained on Poly Haven CC0 HDRIs). Injects spherical projection geometry into Qwen-Image 2.1 to generate seamless 360° equirectangular panoramas with continuous horizons, seamless 360° boundaries, and consistent lighting.
 - **In-Canvas Interactive 360° VR Viewer**:
   - Hardware-accelerated pure WebGL equirectangular shader (0 KB external libraries).
   - Smooth drag-to-look (yaw/pitch) with zero gimbal lock.
@@ -74,6 +76,12 @@ Both production-ready workflow JSON files are powered by the **360 Panorama LoRA
 2. `Qwen_Image_2.1_Full_Quality_Panorama_360.json`: 25-step production 2K render (`2048×1024`) driven by the Pano360 LoRA and native Euler sampler for pristine spherical skyboxes.
 
 Simply drag and drop either JSON file directly into your ComfyUI window!
+
+### 💡 How to Generate from Text Only (Pure Text-to-Panorama)
+Both workflows support pure Text-to-Panorama generation out-of-the-box without needing any separate workflow:
+1. In ComfyUI, click on the **`Load Reference Photo`** node and press **`Ctrl + M`** to **Bypass / Mute** it (or disconnect the wire running from `Load Reference Photo` into `Text Encode Qwen Image 2.1`).
+2. In **`Qwen 360 Panorama Prompt`**, write your desired spherical environment in `scene_description` (e.g. *"A futuristic cyberpunk city skyline under a neon rainstorm, wet asphalt reflections below, flying vehicle streaks above"*).
+3. Click **Queue Prompt**: With the image input muted, `Text Encode Qwen Image 2.1` receives 0 reference images and automatically runs in pure text mode, synthesizing a pristine 360° VR world from scratch!
 
 ---
 

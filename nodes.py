@@ -90,7 +90,11 @@ class QwenPanoramaPrompt:
             parts.append(custom_details.strip())
 
         full_scene = ", ".join(parts)
-        full_positive = f"Transform this set of images into an equirectangular 360 panorama. Scene: {full_scene}."
+        desc_lower = scene_description.strip().lower()
+        if desc_lower.startswith("transform") or desc_lower.startswith("an equirectangular") or desc_lower.startswith("equirectangular"):
+            full_positive = full_scene
+        else:
+            full_positive = f"Transform this set of images into an equirectangular 360 panorama. Scene: {full_scene}."
 
         display_info = f"Prompt generated for Qwen 360 Panorama LoRA.\nLength: {len(full_positive)} chars"
         return (full_positive, negative_prompt, display_info)

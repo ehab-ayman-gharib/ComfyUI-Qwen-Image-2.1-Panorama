@@ -140,9 +140,11 @@ class WebGLPanoRenderer {
         if (!this.gl || !this.program) return;
         const gl = this.gl;
 
-        if (this.canvas.width !== this.canvas.clientWidth || this.canvas.height !== this.canvas.clientHeight) {
-            this.canvas.width = this.canvas.clientWidth || 400;
-            this.canvas.height = this.canvas.clientHeight || 240;
+        const targetW = this.canvas.clientWidth || 400;
+        const targetH = this.canvas.clientHeight || 280;
+        if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
+            this.canvas.width = targetW;
+            this.canvas.height = targetH;
         }
 
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
@@ -150,7 +152,7 @@ class WebGLPanoRenderer {
 
         gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
         gl.uniform2f(this.uRotation, this.yaw, this.pitch);
-        gl.uniformfloat = gl.uniform1f(this.uFov, this.fov);
+        gl.uniform1f(this.uFov, this.fov);
         gl.uniform1i(this.uTexture, 0);
 
         gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -168,13 +170,27 @@ app.registerExtension({
                 return r;
             };
 
-            nodeType.prototype.setupPanoramaViewer = function () {
-                this.size = [460, 360];
+            const onConfigure = nodeType.prototype.onConfigure;
+            nodeType.prototype.onConfigure = function () {
+                const r = onConfigure ? onConfigure.apply(this, arguments) : undefined;
+                // Prevent past bloated heights from persisting when loading workflows
+                if (this.size && this.size[1] > 500) {
+                    this.size[1] = 440;
+                }
+                return r;
+            };
 
-                // Create container element
+            nodeType.prototype.setupPanoramaViewer = function () {
+                const VIEWER_HEIGHT = 280;
+                this.size = [460, 440];
+
+                // Create container element with fixed explicit height constraints
                 const container = document.createElement("div");
                 container.style.width = "100%";
-                container.style.height = "100%";
+                container.style.height = `${VIEWER_HEIGHT}px`;
+                container.style.minHeight = `${VIEWER_HEIGHT}px`;
+                container.style.maxHeight = `${VIEWER_HEIGHT}px`;
+                container.style.flex = `0 0 ${VIEWER_HEIGHT}px`;
                 container.style.display = "flex";
                 container.style.flexDirection = "column";
                 container.style.backgroundColor = "#12141a";
@@ -183,6 +199,10 @@ app.registerExtension({
                 container.style.border = "1px solid #2d3440";
                 container.style.position = "relative";
                 container.style.userSelect = "none";
+                container.style.boxSizing = "border-box";
+                container.style.setProperty("--comfy-widget-min-height", `${VIEWER_HEIGHT}px`);
+                container.style.setProperty("--comfy-widget-max-height", `${VIEWER_HEIGHT}px`);
+                container.style.setProperty("--comfy-widget-height", `${VIEWER_HEIGHT}px`);
 
                 // Top Header Overlay
                 const header = document.createElement("div");
@@ -228,9 +248,12 @@ app.registerExtension({
                 // WebGL Canvas
                 const canvas = document.createElement("canvas");
                 canvas.style.width = "100%";
-                canvas.style.height = "100%";
-                canvas.style.flex = "1";
+                canvas.style.height = `${VIEWER_HEIGHT}px`;
+                canvas.style.display = "block";
+                canvas.style.boxSizing = "border-box";
                 canvas.style.cursor = "grab";
+                canvas.style.flex = "1 1 auto";
+                canvas.style.minHeight = "0";
                 container.appendChild(canvas);
 
                 // Bottom Hint Bar
@@ -246,15 +269,20 @@ app.registerExtension({
                 hintBar.style.pointerEvents = "none";
                 container.appendChild(hintBar);
 
-                // Attach WebGL Renderer
+                // Attach WebGL Renderer (strictly static, only renders on user drag or wheel)
                 const renderer = new WebGLPanoRenderer(canvas);
                 this.panoRenderer = renderer;
 
-                // Responsive resize observer
+                // Responsive resize observer with rAF debouncing to prevent layout feedback loops
+                let resizeAnimFrame = null;
                 const resizeObserver = new ResizeObserver(() => {
-                    if (renderer.textureLoaded) {
-                        renderer.render();
-                    }
+                    if (resizeAnimFrame) return;
+                    resizeAnimFrame = requestAnimationFrame(() => {
+                        resizeAnimFrame = null;
+                        if (renderer.textureLoaded) {
+                            renderer.render();
+                        }
+                    });
                 });
                 resizeObserver.observe(container);
 
@@ -272,7 +300,6 @@ app.registerExtension({
                 canvas.addEventListener("pointermove", (e) => {
                     if (!renderer.isDragging) return;
                     if (e.buttons !== 1) {
-                        // Button released elsewhere or not held down: immediately stop dragging
                         renderer.isDragging = false;
                         canvas.style.cursor = "grab";
                         try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
@@ -295,23 +322,27 @@ app.registerExtension({
                     if (renderer.isDragging) {
                         renderer.isDragging = false;
                         canvas.style.cursor = "grab";
-                        try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+                        try {
+                            if (e && e.pointerId !== undefined) {
+                                canvas.releasePointerCapture(e.pointerId);
+                            }
+                        } catch (_) {}
                     }
                 };
 
                 canvas.addEventListener("pointerup", stopDrag);
                 canvas.addEventListener("pointercancel", stopDrag);
+                canvas.addEventListener("lostpointercapture", stopDrag);
+                window.addEventListener("pointerup", stopDrag);
 
-                // Zoom (FOV)
-                canvas.addEventListener("wheel", (e) => {
+                // Zoom (FOV) - stop propagation on entire container so ComfyUI canvas does not zoom or scroll
+                container.addEventListener("wheel", (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    const delta = Math.sign(e.deltaY) * 0.08;
+                    const delta = Math.sign(e.deltaY) * 0.05;
                     renderer.fov = Math.max(0.4, Math.min(2.0, renderer.fov + delta));
                     renderer.render();
                 }, { passive: false });
-
-
 
                 // Fullscreen modal preview
                 btnFullscreen.addEventListener("click", () => {
@@ -322,14 +353,33 @@ app.registerExtension({
                     }
                 });
 
-                // Mount widget to LiteGraph node
+                // Mount widget to LiteGraph node with rigid min/max height contracts
                 const widget = this.addDOMWidget("panorama_viewer", "custom_pano", container, {
+                    serialize: false,
+                    hideOnZoom: false,
                     getValue() { return ""; },
-                    setValue(v) { }
+                    setValue(v) { },
+                    getMinHeight: () => VIEWER_HEIGHT,
+                    getMaxHeight: () => VIEWER_HEIGHT,
+                    getHeight: () => VIEWER_HEIGHT,
                 });
 
+                widget.computeSize = function (width) {
+                    return [width || 460, VIEWER_HEIGHT];
+                };
+
+                widget.computeLayoutSize = function () {
+                    return {
+                        minHeight: VIEWER_HEIGHT,
+                        maxHeight: VIEWER_HEIGHT,
+                        minWidth: 360
+                    };
+                };
+
                 this.onRemoved = function () {
+                    if (resizeAnimFrame) cancelAnimationFrame(resizeAnimFrame);
                     resizeObserver.disconnect();
+                    window.removeEventListener("pointerup", stopDrag);
                 };
             };
 

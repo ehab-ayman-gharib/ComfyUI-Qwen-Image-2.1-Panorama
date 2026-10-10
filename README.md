@@ -1,6 +1,6 @@
 # 🌐 ComfyUI-Qwen-Panorama
 
-Transform any single 2D photo into a seamless **360° Equirectangular VR Panorama** using **Qwen-Image 2.1** in ComfyUI. Includes an in-canvas interactive WebGL 360° VR viewer, Google Photo Sphere XMP injection, and dual execution modes (Turbo ~20s vs. Full Quality 2K).
+Transform any single 2D photo into a seamless **360° Equirectangular VR Panorama** using **Qwen-Image 2.1** and the specialized **360 Panorama Maker LoRA** (`pano360_qwen21_edit_v1.safetensors` by Gogodr / Poly Haven). Includes an in-canvas interactive WebGL 360° VR viewer, Google Photo Sphere XMP metadata injection, native 2K spherical generation, seamless 4K upscaler, and dual execution modes (Turbo ~20s vs. Full Quality 2K).
 
 Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly under **7.0 GB peak VRAM**.
 
@@ -16,6 +16,7 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
 
 ## ✨ Features
 
+- **360 Panorama LoRA Spherical Backbone**: Powered by Gogodr's `pano360_qwen21_edit_v1.safetensors` (trained on Poly Haven CC0 HDRIs). Injects spherical projection geometry into Qwen-Image 2.1 to generate seamless 360° equirectangular panoramas with continuous horizons, seamless 360° boundaries, and consistent lighting matching the input photo.
 - **2D Photo to 360° World**: Feed in a single normal photo (placed in center foreground); the model synthetically invents the rest of the 360° world (sky above, ground below, behind you) matching exact lighting and atmosphere.
 - **In-Canvas Interactive 360° VR Viewer**:
   - Hardware-accelerated pure WebGL equirectangular shader (0 KB external libraries).
@@ -59,7 +60,7 @@ pip install -r ComfyUI-Qwen-Image-2.1-Panorama/requirements.txt
 | Role | File Name | Size | Storage Directory | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
 | **Diffusion (DiT)** | `qwen_image_2.1_Q5_K_M.gguf` | 5.8 GB | `models/unet/` | [Hugging Face](https://huggingface.co/AlperKTS/Qwen-Image-2.1-GGUF) |
-| **360 Pano LoRA** | `pano360_qwen21_edit_v1.safetensors` | 152 MB | `models/loras/` | [Hugging Face](https://huggingface.co/Gogodr/qwen-image-2.1-edit-pano360-lora) |
+| **360 Pano LoRA (Essential)** | `pano360_qwen21_edit_v1.safetensors` | 152 MB | `models/loras/` | [Hugging Face](https://huggingface.co/Gogodr/qwen-image-2.1-edit-pano360-lora) |
 | **Turbo LoRA** *(Optional)* | `Qwen-Image-2.1-viggle-turbo-v0.3-6step-lora-r128.safetensors` | 315 MB | `models/loras/` | [Hugging Face](https://huggingface.co/ViggleAI/Qwen-Image-2.1-viggle-turbo) |
 | **Text Encoder** | `qwen3vl_8b_w4a8.safetensors` | 5.8 GB | `models/text_encoders/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
 | **VAE** | `qwen_image_2.1_vae_bf16.safetensors` | 496 MB | `models/vae/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
@@ -68,9 +69,9 @@ pip install -r ComfyUI-Qwen-Image-2.1-Panorama/requirements.txt
 
 ## 🚀 Workflows Included
 
-Both ready-to-run workflow JSON files are located in `workflows/`:
-1. `Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`: 9-step Viggle Turbo v0.3 fast draft (~20s generation on 8GB VRAM).
-2. `Qwen_Image_2.1_Full_Quality_Panorama_360.json`: 25-step production 2K render (`2048×1024`).
+Both production-ready workflow JSON files are powered by the **360 Panorama LoRA** (`pano360_qwen21_edit_v1.safetensors`) and located in `workflows/`:
+1. `Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`: 9-step dual-LoRA stack (Pano360 LoRA + Viggle Turbo v0.3) for ultra-fast drafts (~20s generation on 8GB VRAM).
+2. `Qwen_Image_2.1_Full_Quality_Panorama_360.json`: 25-step production 2K render (`2048×1024`) driven by the Pano360 LoRA and native Euler sampler for pristine spherical skyboxes.
 
 Simply drag and drop either JSON file directly into your ComfyUI window!
 

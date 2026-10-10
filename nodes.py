@@ -1,0 +1,754 @@
+import os
+import torch
+import numpy as np
+from PIL import Image
+import folder_paths
+import subprocess
+import comfy.model_management
+
+class QwenPanoramaPrompt:
+    """
+    Constructs the exact equirectangular 360 trigger prompt required by the
+    Gogodr/qwen-image-2.1-edit-pano360-lora model for Qwen-Image 2.1.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "scene_description": ("STRING", {
+                    "multiline": True,
+                    "default": "A serene alpine lake surrounded by evergreen pine forests and snow-capped granite mountains, crystal clear water reflections, dramatic horizon line.",
+                    "tooltip": "Detailed description of the environment, focal subjects, architecture, and horizon to expand into 360°."
+                }),
+                "lighting": ([
+                    "default",
+                    "bright midday sun with clear blue sky",
+                    "warm golden hour sunset with long shadows",
+                    "blue hour twilight just after dusk",
+                    "night starry sky with milky way and celestial glow",
+                    "dramatic overcast storm clouds with moody lighting",
+                    "foggy misty morning with diffused dawn light",
+                    "indoor warm architectural ambient lighting",
+                    "cyberpunk neon glow with reflections"
+                ], {
+                    "default": "bright midday sun with clear blue sky",
+                    "tooltip": "Atmospheric lighting to enforce across the full 360° spherical horizon."
+                }),
+                "environment_type": ([
+                    "outdoor natural landscape",
+                    "indoor architectural interior",
+                    "city street / urban cityscape",
+                    "sci-fi / fantasy realm",
+                    "aerial cliffside vista",
+                    "custom"
+                ], {
+                    "default": "outdoor natural landscape",
+                    "tooltip": "Broad environment setting for the spherical scene."
+                }),
+            },
+            "optional": {
+                "custom_details": ("STRING", {
+                    "multiline": False,
+                    "default": "high fidelity equirectangular projection, seamless 360 horizon.",
+                    "tooltip": "Additional technical or stylistic prompt keywords appended to the positive prompt."
+                }),
+                "negative_prompt": ("STRING", {
+                    "multiline": True,
+                    "default": "blurry, low quality, distorted poles, broken seams, disfigured architecture, seams down the middle.",
+                    "tooltip": "Negative prompt to suppress stitching seams, pole distortions, or blurriness."
+                })
+            }
+        }
+
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("positive_prompt", "negative_prompt", "display_info")
+    OUTPUT_TOOLTIPS = (
+        "Positive prompt formatted with 360 equirectangular trigger syntax.",
+        "Negative prompt passed downstream to CLIP conditioning.",
+        "Summary text containing character count and configuration info."
+    )
+    FUNCTION = "build_prompt"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Constructs the equirectangular 360° trigger prompt required by the Pano360 LoRA, merging scene description, lighting conditions, and environment type."
+
+    def build_prompt(self, scene_description, lighting, environment_type, custom_details="", negative_prompt=""):
+        # Auto clean PyTorch CUDA cache to prevent shared memory paging on 8GB VRAM
+        try:
+            import comfy.model_management as mm
+            mm.soft_empty_cache()
+        except Exception:
+            pass
+
+        parts = []
+        if scene_description.strip():
+            parts.append(scene_description.strip())
+        if lighting != "default":
+            parts.append(lighting)
+        if environment_type != "custom":
+            parts.append(environment_type)
+        if custom_details.strip():
+            parts.append(custom_details.strip())
+
+        full_scene = ", ".join(parts)
+        full_positive = f"Transform this set of images into an equirectangular 360 panorama. Scene: {full_scene}."
+
+        display_info = f"Prompt generated for Qwen 360 Panorama LoRA.\nLength: {len(full_positive)} chars"
+        return (full_positive, negative_prompt, display_info)
+
+
+class QwenPanoramaLatent:
+    """
+    Enforces exact 2:1 equirectangular aspect ratios (multiples of 32/64)
+    necessary for proper spherical projection and WanVAE decoding.
+    Defaults to 2048x1024 (2K VR Production) for crisp non-pixelated spherical detail.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "resolution_preset": ([
+                    "2048x1024 (2K VR Production 2:1)",
+                    "1536x768 (LoRA Native Draft 2:1)",
+                    "1472x736 (Low-VRAM Draft 1.08 MP)",
+                    "1568x672 (21:9 Ultrawide 1.05 MP)",
+                    "1024x512 (Ultra Fast Preview 2:1)",
+                    "Custom 2:1"
+                ], {
+                    "default": "2048x1024 (2K VR Production 2:1)",
+                    "tooltip": "Standard 2:1 equirectangular resolution preset. 2048x1024 recommended for production; 1536x768 or 1024x512 for fast drafts on 8GB VRAM."
+                }),
+                "custom_width": ("INT", {
+                    "default": 2048, "min": 512, "max": 4096, "step": 64,
+                    "tooltip": "Custom pixel width when 'Custom 2:1' is selected (auto-snapped to multiple of 64)."
+                }),
+                "custom_height": ("INT", {
+                    "default": 1024, "min": 256, "max": 2048, "step": 32,
+                    "tooltip": "Custom pixel height when 'Custom 2:1' is selected (auto-snapped to multiple of 32)."
+                }),
+                "batch_size": ("INT", {
+                    "default": 1, "min": 1, "max": 8, "step": 1,
+                    "tooltip": "Number of latent samples to generate."
+                })
+            }
+        }
+
+    RETURN_TYPES = ("LATENT", "INT", "INT")
+    RETURN_NAMES = ("latent", "width", "height")
+    OUTPUT_TOOLTIPS = (
+        "Empty 64-channel latent tensor for Qwen-Image 2.1 DiT and Wan 2.2 VAE.",
+        "Calculated image width in pixels.",
+        "Calculated image height in pixels."
+    )
+    FUNCTION = "generate_latent"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Generates empty 64-channel latent tensors for Qwen-Image 2.1 DiT enforcing exact 2:1 equirectangular aspect ratios and multiple-of-64 dimensions."
+
+    def generate_latent(self, resolution_preset, custom_width, custom_height, batch_size):
+        if "1472x736" in resolution_preset:
+            w, h = 1472, 736
+        elif "1568x672" in resolution_preset:
+            w, h = 1568, 672
+        elif "1536x768" in resolution_preset:
+            w, h = 1536, 768
+        elif "2048x1024" in resolution_preset:
+            w, h = 2048, 1024
+        elif "1024x512" in resolution_preset:
+            w, h = 1024, 512
+        else:
+            w = (custom_width // 64) * 64
+            h = (custom_height // 32) * 32
+
+        # Native 64-channel latent for Qwen-Image-2.1 DiT and Wan 2.2 VAE (spatial downscale 16)
+        device = comfy.model_management.intermediate_device()
+        dtype = comfy.model_management.intermediate_dtype()
+        latent = torch.zeros([batch_size, 64, h // 16, w // 16], device=device, dtype=dtype)
+        return ({"samples": latent}, w, h)
+
+
+class QwenPanorama360Viewer:
+    """
+    Interactive in-canvas WebGL 360 equirectangular sphere viewer.
+    Allows dragging to look in full 360 (yaw/pitch), mouse-wheel FOV zoom,
+    auto-rotation, and full-window VR preview directly inside ComfyUI.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE", {"tooltip": "Equirectangular 360° panorama image(s) to display in the interactive sphere viewer."}),
+            },
+            "optional": {
+                "default_fov": ("INT", {
+                    "default": 80, "min": 40, "max": 120, "step": 5,
+                    "tooltip": "Initial camera field-of-view in degrees."
+                }),
+                "auto_rotate": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Enable smooth turntable rotation when idle."
+                }),
+                "auto_rotate_speed": ("FLOAT", {
+                    "default": 0.5, "min": 0.1, "max": 3.0, "step": 0.1,
+                    "tooltip": "Turntable rotation speed."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("images",)
+    OUTPUT_TOOLTIPS = ("Pass-through image tensor for chaining to saving or downstream nodes.",)
+    FUNCTION = "view_panorama"
+    OUTPUT_NODE = True
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Interactive in-canvas 360° VR equirectangular sphere viewer. Supports mouse dragging, wheel FOV zoom, and full-screen VR preview inside ComfyUI."
+
+    def view_panorama(self, images, default_fov=80, auto_rotate=True, auto_rotate_speed=0.5):
+        temp_dir = folder_paths.get_temp_directory()
+        results = []
+
+        for i, image_tensor in enumerate(images):
+            # Tensor to numpy uint8
+            img_np = 255.0 * image_tensor.cpu().numpy()
+            img_np = np.clip(img_np, 0, 255).astype(np.uint8)
+            img = Image.fromarray(img_np)
+            if img.mode == "RGBA":
+                bg = Image.new("RGB", img.size, (255, 255, 255))
+                bg.paste(img, mask=img.getchannel("A"))
+                img = bg
+            elif img.mode != "RGB":
+                img = img.convert("RGB")
+
+            filename = f"qwen_pano_preview_{i}_{os.getpid()}.jpg"
+            file_path = os.path.join(temp_dir, filename)
+            img.save(file_path, quality=92)
+
+            results.append({
+                "filename": filename,
+                "subfolder": "",
+                "type": "temp",
+                "width": img.width,
+                "height": img.height,
+                "aspect_ratio": f"{img.width}:{img.height}",
+                "default_fov": default_fov,
+                "auto_rotate": auto_rotate,
+                "auto_rotate_speed": auto_rotate_speed
+            })
+
+        return {"ui": {"images": results}, "result": (images,)}
+
+
+class QwenPanoramaExport:
+    """
+    Multi-format export node for 360 panoramas:
+    - High-resolution equirectangular PNG/JPG
+    - Standard Photo Sphere XMP metadata injection (for auto-360 VR playback on Facebook/Google/VR)
+    - Optional 360 rotating horizontal flythrough video (H.264 MP4) via FFmpeg
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images": ("IMAGE", {"tooltip": "Equirectangular 360° panorama image(s) to export."}),
+                "filename_prefix": ("STRING", {
+                    "default": "Qwen_Panorama_360",
+                    "tooltip": "Prefix for exported image and video filenames (saved in ComfyUI/output/Panoramas/)."
+                }),
+                "format": (["png", "webp", "jpg_vr360"], {
+                    "default": "jpg_vr360",
+                    "tooltip": "Export file format. 'jpg_vr360' injects standard Google Photo Sphere GPano XMP metadata for instant VR playback."
+                }),
+            },
+            "optional": {
+                "export_rotating_video": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "When enabled, renders a smooth 360-degree rotating flythrough MP4 video alongside the image using FFmpeg."
+                }),
+                "video_duration_seconds": ("FLOAT", {
+                    "default": 10.0, "min": 4.0, "max": 30.0, "step": 1.0,
+                    "tooltip": "Duration of the rotating flythrough MP4 video in seconds."
+                }),
+                "video_fps": ("INT", {
+                    "default": 30, "min": 15, "max": 60, "step": 5,
+                    "tooltip": "Frame rate (frames per second) of the rotating flythrough MP4 video."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("saved_paths",)
+    OUTPUT_TOOLTIPS = ("Comma-separated list of saved image and video file paths in output/Panoramas/.",)
+    FUNCTION = "export_panorama"
+    OUTPUT_NODE = True
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Exports 360° equirectangular panoramas with embedded Google Photo Sphere (GPano) XMP metadata for VR platforms, with optional rotating MP4 video flythrough."
+
+    def export_panorama(self, images, filename_prefix, format="jpg_vr360", export_rotating_video=False, video_duration_seconds=10.0, video_fps=30):
+        output_dir = folder_paths.get_output_directory()
+        pano_dir = os.path.join(output_dir, "Panoramas")
+        os.makedirs(pano_dir, exist_ok=True)
+
+        saved_paths = []
+
+        # Find unique index
+        base_count = 1
+        while any(os.path.exists(os.path.join(pano_dir, f"{filename_prefix}_{base_count:05d}.{ext}")) for ext in ["png", "webp", "jpg"]):
+            base_count += 1
+
+        for i, img_tensor in enumerate(images):
+            img_np = 255.0 * img_tensor.cpu().numpy()
+            img_np = np.clip(img_np, 0, 255).astype(np.uint8)
+            img = Image.fromarray(img_np)
+
+            idx = base_count + i
+            ext = "jpg" if format == "jpg_vr360" else format
+            out_filename = f"{filename_prefix}_{idx:05d}.{ext}"
+            out_path = os.path.join(pano_dir, out_filename)
+
+            if format == "jpg_vr360":
+                # Ensure RGB for JPEG
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+                # Save JPEG with high quality
+                img.save(out_path, format="JPEG", quality=95)
+                # Inject XMP GPano metadata for auto-360 detection
+                try:
+                    self._inject_vr360_xmp(out_path, img.width, img.height)
+                except Exception as e:
+                    print(f"[QwenPanoramaExport] XMP injection warning: {e}")
+            elif format == "webp":
+                img.save(out_path, format="WEBP", quality=92)
+            else:
+                img.save(out_path, format="PNG")
+
+            saved_paths.append(out_path)
+
+            # Optional rotating MP4 flythrough
+            if export_rotating_video:
+                mp4_filename = f"{filename_prefix}_{idx:05d}_flythrough.mp4"
+                mp4_path = os.path.join(pano_dir, mp4_filename)
+                self._generate_rotating_mp4(out_path, mp4_path, img.width, img.height, video_duration_seconds, video_fps)
+                saved_paths.append(mp4_path)
+
+        return {"ui": {"exported_files": saved_paths}, "result": (", ".join(saved_paths),)}
+
+    def _inject_vr360_xmp(self, jpeg_path, width, height):
+        """
+        Injects standard Google Photo Sphere XMP metadata directly into JPEG APP1 block.
+        Allows immediate 360 panorama detection in Facebook, VR headsets, and 360 viewers.
+        """
+        xmp_template = f"""http://ns.adobe.com/xap/1.0/\x00<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+ <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description rdf:about="" xmlns:GPano="http://ns.google.com/photos/1.0/panorama/">
+   <GPano:UsePanoramaViewer>True</GPano:UsePanoramaViewer>
+   <GPano:CaptureSoftware>ComfyUI-Qwen-Panorama</GPano:CaptureSoftware>
+   <GPano:ProjectionType>equirectangular</GPano:ProjectionType>
+   <GPano:CroppedAreaImageWidthPixels>{width}</GPano:CroppedAreaImageWidthPixels>
+   <GPano:CroppedAreaImageHeightPixels>{height}</GPano:CroppedAreaImageHeightPixels>
+   <GPano:FullPanoWidthPixels>{width}</GPano:FullPanoWidthPixels>
+   <GPano:FullPanoHeightPixels>{height}</GPano:FullPanoHeightPixels>
+   <GPano:CroppedAreaLeftPixels>0</GPano:CroppedAreaLeftPixels>
+   <GPano:CroppedAreaTopPixels>0</GPano:CroppedAreaTopPixels>
+  </rdf:Description>
+ </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>"""
+
+        with open(jpeg_path, "rb") as f:
+            data = f.read()
+
+        # JPEG starts with SOI (0xFFD8)
+        if data[:2] != b'\xff\xd8':
+            return
+
+        xmp_bytes = xmp_template.encode("utf-8")
+        app1_len = len(xmp_bytes) + 2
+        app1_header = b'\xff\xe1' + app1_len.to_bytes(2, byteorder='big')
+        app1_packet = app1_header + xmp_bytes
+
+        # Insert APP1 after SOI
+        new_data = data[:2] + app1_packet + data[2:]
+        with open(jpeg_path, "wb") as f:
+            f.write(new_data)
+
+    def _generate_rotating_mp4(self, img_path, out_mp4_path, width, height, duration, fps):
+        """
+        Uses FFmpeg v360 filter to render a smooth 360-degree horizontal yaw pan video.
+        """
+        total_frames = max(1, int(duration * fps))
+        h_speed = 1.0 / float(total_frames)
+        # Scroll equirectangular horizontally, then project to perspective flat view (1280x720)
+        filter_expr = f"scroll=h=-{h_speed:.8f},v360=input=e:output=flat:d_fov=90:w=1280:h=720"
+
+        cmd = [
+            "ffmpeg", "-y",
+            "-loop", "1",
+            "-i", img_path,
+            "-vf", filter_expr,
+            "-t", str(duration),
+            "-r", str(fps),
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-movflags", "faststart",
+            "-crf", "19",
+            out_mp4_path
+        ]
+        try:
+            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            print(f"[QwenPanoramaExport] Successfully rendered rotating video: {out_mp4_path}")
+        except Exception as e:
+            print(f"[QwenPanoramaExport] FFmpeg video generation warning: {e}")
+
+
+class QwenPanoramaUpscale:
+    """
+    High-fidelity 360° equirectangular upscaler with circular horizontal seam wrapping.
+    Prevents vertical seam line artifacts at the 0°/360° wrap boundary and provides instant,
+    zero-latency upscaling from draft resolutions (1024x512 or 1536x768) to 2K (2048x1024) or 4K.
+    Includes a direct bypass toggle.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", {"tooltip": "Draft equirectangular panorama image to upscale."}),
+                "target_resolution": ([
+                    "2048x1024 (2K Production 2:1)",
+                    "4096x2048 (4K Ultra VR 2:1)",
+                    "Custom Scale",
+                    "Bypass / Original (No Upscale)"
+                ], {
+                    "default": "2048x1024 (2K Production 2:1)",
+                    "tooltip": "Target 2:1 spherical resolution preset (2048x1024 Production, 4096x2048 Ultra VR, Custom Scale, or Bypass)."
+                }),
+                "upscale_method": ([
+                    "bicubic",
+                    "bilinear",
+                    "nearest-exact"
+                ], {
+                    "default": "bicubic",
+                    "tooltip": "Interpolation algorithm ('bicubic' with antialiasing recommended for smooth textures)."
+                }),
+                "custom_scale": ("FLOAT", {
+                    "default": 1.333, "min": 1.0, "max": 4.0, "step": 0.05,
+                    "tooltip": "Multiplier factor applied when 'Custom Scale' is selected."
+                }),
+                "seamless_boundary": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Enables 5% toroidal boundary wrapping so the left and right edges interpolate together, eliminating vertical seam line artifacts."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "INT", "INT", "STRING")
+    RETURN_NAMES = ("image", "width", "height", "info")
+    OUTPUT_TOOLTIPS = (
+        "Upscaled seamless equirectangular 360° panorama image.",
+        "Target width in pixels.",
+        "Target height in pixels.",
+        "Summary string of the upscale operation."
+    )
+    FUNCTION = "upscale"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Upscales 360° panoramas to 2K (2048x1024) or 4K (4096x2048) with 5% horizontal toroidal boundary wrapping to eliminate vertical seam artifacts."
+
+    def upscale(self, image, target_resolution, upscale_method, custom_scale, seamless_boundary):
+        B, H, W, C = image.shape
+        if target_resolution == "Bypass / Original (No Upscale)" or (target_resolution == "Custom Scale" and custom_scale == 1.0):
+            return (image, W, H, f"Original: {W}x{H} (Bypassed)")
+
+        if "2048x1024" in target_resolution:
+            target_w, target_h = 2048, 1024
+        elif "4096x2048" in target_resolution:
+            target_w, target_h = 4096, 2048
+        else:
+            target_w = int(round(W * custom_scale / 64)) * 64
+            target_h = int(round(H * custom_scale / 32)) * 32
+
+        if target_w == W and target_h == H:
+            return (image, W, H, f"No change: {W}x{H}")
+
+        # Circular horizontal seam wrapping
+        if seamless_boundary:
+            pad_w = max(16, int(W * 0.05))
+            left_pad = image[:, :, -pad_w:, :]
+            right_pad = image[:, :, :pad_w, :]
+            padded = torch.cat([left_pad, image, right_pad], dim=2)
+            pad_target = int(target_w * (pad_w / W))
+            padded_target_w = target_w + 2 * pad_target
+        else:
+            padded = image
+            padded_target_w = target_w
+            pad_target = 0
+
+        x = padded.permute(0, 3, 1, 2)
+        antialias = True if upscale_method in ("bicubic", "bilinear") else False
+
+        upscaled = torch.nn.functional.interpolate(
+            x,
+            size=(target_h, padded_target_w),
+            mode=upscale_method,
+            align_corners=False if upscale_method in ("bicubic", "bilinear") else None,
+            antialias=antialias
+        )
+
+        if pad_target > 0:
+            cropped = upscaled[:, :, :, pad_target : pad_target + target_w]
+        else:
+            cropped = upscaled
+
+        out = cropped.permute(0, 2, 3, 1).clamp(0.0, 1.0)
+        info_str = f"Seamless 360 Upscaled: {W}x{H} -> {target_w}x{target_h} ({upscale_method})"
+        return (out, target_w, target_h, info_str)
+
+
+class QwenPanoramaSeamExtract:
+    """
+    Step 1 of Surgical Seam Healing:
+    Rolls the 360 panorama horizontally by 50% so the seam is placed directly at the center,
+    then crops a vertical strip (e.g. 512x1024) centered at the seam.
+    The small crop can be inpainted/denoised in ~3-4 seconds with zero VRAM offloading.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", {"tooltip": "Full 360° equirectangular panorama image to inspect/repair."}),
+                "crop_width": ("INT", {
+                    "default": 512, "min": 256, "max": 1024, "step": 64,
+                    "tooltip": "Width in pixels of the center vertical strip to crop (default: 512px). Keeps sampling fast with zero memory swapping."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "SEAM_CONTEXT")
+    RETURN_NAMES = ("crop_image", "seam_context")
+    OUTPUT_TOOLTIPS = (
+        "Cropped vertical image centered exactly on the boundary seam for targeted inpainting.",
+        "Context dictionary storing coordinates and rolled background required by Step 2 (Seam Restore)."
+    )
+    FUNCTION = "extract_seam"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Step 1 of Surgical Seam Healing: Rolls the panorama horizontally by 50% to place the seam at the center, then crops a narrow vertical strip for fast inpainting."
+
+    def extract_seam(self, image, crop_width):
+        B, H, W, C = image.shape
+        rolled = torch.roll(image, shifts=W // 2, dims=2)
+        cx = W // 2
+        x1 = max(0, cx - crop_width // 2)
+        x2 = min(W, cx + crop_width // 2)
+        crop = rolled[:, :, x1:x2, :].clone()
+        seam_context = {
+            "rolled": rolled,
+            "x1": x1,
+            "x2": x2,
+            "W": W,
+            "H": H
+        }
+        return (crop, seam_context)
+
+
+class QwenPanoramaSeamPaste:
+    """
+    Step 2 of Surgical Seam Healing:
+    Takes the healed crop, blends it back into the rolled panorama with a smooth
+    feathered alpha transition, and rolls back by -50% to original orientation.
+    Outputs the final seamless 360 panorama!
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "healed_crop": ("IMAGE", {"tooltip": "The inpainted/denoised vertical crop returned from your inpainting sampler."}),
+                "seam_context": ("SEAM_CONTEXT", {"tooltip": "Context dictionary from Qwen 360 Panorama Seam Extract (Step 1)."}),
+                "feather_width": ("INT", {
+                    "default": 32, "min": 8, "max": 128, "step": 8,
+                    "tooltip": "Pixel width of the cosine alpha edge blend (prevents sharp boundaries between the inpainted patch and original panorama)."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("healed_panorama",)
+    OUTPUT_TOOLTIPS = ("Final seamless 360° equirectangular panorama with the seam fully healed and restored to original orientation.",)
+    FUNCTION = "paste_seam"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Step 2 of Surgical Seam Healing: Blends the inpainted crop back with cosine feathered alpha masking and unrolls by -50% to restore original orientation."
+
+    def paste_seam(self, healed_crop, seam_context, feather_width):
+        rolled = seam_context["rolled"].clone()
+        x1 = seam_context["x1"]
+        x2 = seam_context["x2"]
+        W = seam_context["W"]
+        crop_w = x2 - x1
+
+        # Match dimensions if needed
+        if healed_crop.shape[2] != crop_w or healed_crop.shape[1] != rolled.shape[1]:
+            healed_crop = torch.nn.functional.interpolate(
+                healed_crop.permute(0, 3, 1, 2),
+                size=(rolled.shape[1], crop_w),
+                mode="bicubic",
+                align_corners=False
+            ).permute(0, 2, 3, 1)
+
+        # Match color channels
+        if healed_crop.shape[-1] > rolled.shape[-1]:
+            healed_crop = healed_crop[:, :, :, :rolled.shape[-1]]
+
+        feather = min(feather_width, crop_w // 4)
+        device = healed_crop.device
+        dtype = healed_crop.dtype
+
+        mask_1d = torch.ones(crop_w, device=device, dtype=dtype)
+        ramp_in = 0.5 * (1.0 - torch.cos(torch.linspace(0, torch.pi, feather, device=device, dtype=dtype)))
+        ramp_out = 0.5 * (1.0 + torch.cos(torch.linspace(0, torch.pi, feather, device=device, dtype=dtype)))
+        mask_1d[:feather] = ramp_in
+        mask_1d[-feather:] = ramp_out
+        alpha_mask = mask_1d.view(1, 1, crop_w, 1)
+
+        existing = rolled[:, :, x1:x2, :]
+        blended = existing * (1.0 - alpha_mask) + healed_crop * alpha_mask
+        rolled[:, :, x1:x2, :] = blended
+
+        final_pano = torch.roll(rolled, shifts=-(W // 2), dims=2)
+        return (final_pano.clamp(0.0, 1.0),)
+
+
+class QwenPanoramaRoll:
+    """
+    Horizontally rolls a 360 equirectangular panorama and optional mask:
+    - 'Roll 50% (Center Seam)': shifts by +50% of image width so the boundary seam is placed directly at the center for inspection or interactive mask painting.
+    - 'Unroll -50% (Restore Horizon)': shifts by -50% to restore the original 360 sphere orientation.
+    - 'Custom Shift': shifts by an arbitrary percentage (-100% to +100%).
+    If a mask is connected, it is rolled in exact sync with the image.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", {"tooltip": "360° equirectangular panorama image to roll."}),
+                "mode": ([
+                    "Roll 50% (Center Seam)",
+                    "Unroll -50% (Restore Horizon)",
+                    "Custom Shift"
+                ], {
+                    "default": "Roll 50% (Center Seam)",
+                    "tooltip": "Roll mode: 'Roll 50%' places the boundary seam at the center; 'Unroll -50%' restores original orientation; 'Custom Shift' allows arbitrary horizontal scrolling."
+                }),
+            },
+            "optional": {
+                "mask": ("MASK", {"tooltip": "Optional mask tensor to roll in exact lockstep with the image."}),
+                "custom_shift_percent": ("FLOAT", {
+                    "default": 50.0, "min": -100.0, "max": 100.0, "step": 1.0,
+                    "tooltip": "Percentage of image width to shift when 'Custom Shift' is selected (-100% to +100%)."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
+    OUTPUT_TOOLTIPS = (
+        "Horizontally shifted equirectangular image.",
+        "Horizontally shifted mask matching the image shift."
+    )
+    FUNCTION = "roll"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Horizontally rolls a 360° equirectangular image and optional mask along the cylindrical axis to inspect or edit the boundary seam."
+
+    def roll(self, image, mode, mask=None, custom_shift_percent=50.0):
+        if image.shape[-1] > 3:
+            image = image[:, :, :, :3]
+        B, H, W, C = image.shape
+        if mode == "Roll 50% (Center Seam)":
+            shift = W // 2
+        elif mode == "Unroll -50% (Restore Horizon)":
+            shift = -(W // 2)
+        else:
+            shift = int(W * (custom_shift_percent / 100.0))
+
+        rolled_image = torch.roll(image, shifts=shift, dims=2)
+
+        if mask is not None:
+            rolled_mask = torch.roll(mask, shifts=shift, dims=-1)
+        else:
+            rolled_mask = torch.zeros((B, H, W), dtype=torch.float32, device=image.device)
+
+        return (rolled_image, rolled_mask)
+
+
+class QwenPanoramaSeamRouter:
+    """
+    Intelligent 2-Phase Seam Healing Router:
+    Phase 1 (No mask detected):
+      - Rolls the 360 panorama by +50% so the seam is placed right down the middle.
+      - Saves the centered panorama to ComfyUI's input/ directory (seam_centered_panorama.png).
+      - Silently blocks downstream inpainting so no VRAM/sampler time is wasted.
+      - The user then simply selects seam_centered_panorama.png in LoadImage and paints the mask!
+    Phase 2 (Mask detected):
+      - Passes the centered image and user's painted mask to InpaintCropImproved for ~3s Viggle Turbo healing.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", {"tooltip": "Equirectangular panorama image to route."}),
+                "mask": ("MASK", {"tooltip": "Inpainting mask tensor from MaskEditor or LoadImage."}),
+                "mode": ([
+                    "Auto (Center & Save if No Mask, Heal if Masked)",
+                    "Force Center & Save to input/",
+                    "Force Inpaint Heal"
+                ], {
+                    "default": "Auto (Center & Save if No Mask, Heal if Masked)",
+                    "tooltip": "Routing behavior: 'Auto' saves to input/ if mask is empty and executes healing once mask is drawn; 'Force Center' always saves to input/."
+                }),
+                "centered_filename": ("STRING", {
+                    "default": "seam_centered_panorama.png",
+                    "tooltip": "Filename used when saving the centered panorama into ComfyUI's input/ directory."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
+    OUTPUT_TOOLTIPS = (
+        "Routed panorama image for downstream inpainting nodes.",
+        "Routed inpainting mask tensor."
+    )
+    FUNCTION = "route"
+    OUTPUT_NODE = True
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Two-phase workflow router: Centers the seam and saves to input/ when no mask is present; proceeds to inpainting when a mask is detected."
+
+    def route(self, image, mask, mode, centered_filename="seam_centered_panorama.png"):
+        B, H, W, C = image.shape
+        is_empty_mask = (mask is None) or (torch.all(mask <= 0.001).item())
+
+        should_center = (mode == "Force Center & Save to input/") or \
+                        (mode == "Auto (Center & Save if No Mask, Heal if Masked)" and is_empty_mask)
+
+        if should_center:
+            # Roll +50% to center the boundary seam
+            rolled = torch.roll(image, shifts=W // 2, dims=2)
+            if rolled.shape[-1] > 3:
+                rolled = rolled[:, :, :, :3]
+
+            # Save directly to input/ folder
+            input_dir = folder_paths.get_input_directory()
+            save_path = os.path.join(input_dir, centered_filename)
+
+            img_np = (rolled[0].cpu().numpy() * 255.0).clip(0, 255).astype(np.uint8)
+            Image.fromarray(img_np).save(save_path)
+            print(f"[QwenPanorama] Centered seam saved to input directory: {save_path}")
+
+            ui_item = [{"filename": centered_filename, "subfolder": "", "type": "input"}]
+            try:
+                from comfy_execution.graph_utils import ExecutionBlocker
+                return {"ui": {"images": ui_item}, "result": (ExecutionBlocker("Seam centered! Select 'seam_centered_panorama.png' in LoadImage, open MaskEditor, paint defect, and queue prompt."), ExecutionBlocker(None))}
+            except Exception:
+                return {"ui": {"images": ui_item}, "result": (rolled, mask)}
+
+        # Phase 2: Mask is present!
+        return (image, mask)
+
+
+
+

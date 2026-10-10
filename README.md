@@ -25,7 +25,7 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
 - **Strict 2:1 Native Aspect Ratio**: Generates at `1472×736` (1.08 MP, exact 2:1, multiple of 32) ensuring spherical geometric accuracy and 100% VRAM residency without PCIe weight offloading.
 - **Instant Seamless 2K VR Upscaling**: `QwenPanoramaUpscale` with circular seam-wrapping (`seamless_boundary: true`) upgrades 1472×736 to crisp 2048×1024 2K VR in < 1 second.
 - **Dual Pipeline Support**:
-  - **⚡ Fast Turbo Mode (~25–35s)**: 6 steps via Viggle Turbo LoRA & custom fast sigmas.
+  - **⚡ Fast Turbo Mode (~20–30s)**: 9 steps via Viggle Turbo v0.3 LoRA & custom refined sigmas (7 turbo + 2 high-precision detail refinement steps).
   - **💎 Full Quality Mode (< 2 min)**: 25 steps via native Euler sampler for pristine 2K VR skyboxes.
 - **Smart 360 Export**:
   - Standard Equirectangular PNG / WebP.
@@ -52,7 +52,7 @@ Restart ComfyUI.
 | :--- | :--- | :--- | :--- | :--- |
 | **Diffusion (DiT)** | `qwen_image_2.1_Q5_K_M.gguf` | 5.8 GB | `models/unet/` | [Hugging Face](https://huggingface.co/AlperKTS/Qwen-Image-2.1-GGUF) |
 | **360 Pano LoRA** | `pano360_qwen21_edit_v1.safetensors` | 152 MB | `models/loras/` | [Hugging Face](https://huggingface.co/Gogodr/qwen-image-2.1-edit-pano360-lora) |
-| **Turbo LoRA** *(Optional)* | `Qwen-Image-2.1-viggle-turbo-v0.2.1-6step-lora-r128.safetensors` | 315 MB | `models/loras/` | [Hugging Face](https://huggingface.co/ViggleAI/Qwen-Image-2.1-viggle-turbo) |
+| **Turbo LoRA** *(Optional)* | `Qwen-Image-2.1-viggle-turbo-v0.3-6step-lora-r128.safetensors` | 315 MB | `models/loras/` | [Hugging Face](https://huggingface.co/ViggleAI/Qwen-Image-2.1-viggle-turbo) |
 | **Text Encoder** | `qwen3vl_8b_w4a8.safetensors` | 5.8 GB | `models/text_encoders/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
 | **VAE** | `qwen_image_2.1_vae_bf16.safetensors` | 496 MB | `models/vae/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
 
@@ -61,7 +61,7 @@ Restart ComfyUI.
 ## 🚀 Workflows Included
 
 Both ready-to-run workflow JSON files are located in `workflows/`:
-1. `Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`: 6-step fast draft (~20s generation on 8GB VRAM).
+1. `Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`: 9-step Viggle Turbo v0.3 fast draft (~20s generation on 8GB VRAM).
 2. `Qwen_Image_2.1_Full_Quality_Panorama_360.json`: 25-step production 2K render (`2048×1024`).
 
 Simply drag and drop either JSON file directly into your ComfyUI window!

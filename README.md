@@ -36,13 +36,19 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
 
 ## 📦 Installation
 
+1. Clone this repository into your `ComfyUI/custom_nodes/` directory:
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/ehab-ayman-gharib/ComfyUI-Qwen-Image-2.1-Panorama.git
 pip install -r ComfyUI-Qwen-Image-2.1-Panorama/requirements.txt
 ```
 
-Restart ComfyUI.
+2. **Prerequisites & Dependencies**:
+- **[ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF)**: Required to load the quantized `Q5_K_M.gguf` DiT model (search `GGUF` in ComfyUI Manager or install via git). *(If you use unquantized bf16 safetensors instead, simply swap `UnetLoaderGGUF` for ComfyUI's native `UNETLoader`)*.
+- **FFmpeg** *(Optional)*: Required only if you toggle `export_rotating_video` in `Qwen 360 Panorama Export` to generate MP4 flythrough videos.
+- **Viggle Turbo Nodes**: Already **bundled inside this repository** ([viggle_turbo.py](viggle_turbo.py)) — no need to install a separate custom node!
+
+3. Restart ComfyUI.
 
 ---
 

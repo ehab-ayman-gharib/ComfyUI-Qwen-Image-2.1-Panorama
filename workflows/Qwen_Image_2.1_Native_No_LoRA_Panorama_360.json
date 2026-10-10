@@ -580,7 +580,7 @@
           "localized_name": "positive",
           "name": "positive",
           "type": "CONDITIONING",
-          "link": 20
+          "link": 8
         },
         {
           "localized_name": "negative",
@@ -891,72 +891,6 @@
       }
     },
     {
-      "id": 17,
-      "type": "VRAMCleanup",
-      "pos": [
-        1600.0,
-        460.0
-      ],
-      "size": [
-        280,
-        82
-      ],
-      "flags": {},
-      "order": 13,
-      "mode": 0,
-      "inputs": [
-        {
-          "localized_name": "anything",
-          "name": "anything",
-          "type": "*",
-          "link": 8
-        },
-        {
-          "localized_name": "offload_model",
-          "name": "offload_model",
-          "type": "BOOLEAN",
-          "widget": {
-            "name": "offload_model"
-          },
-          "link": null
-        },
-        {
-          "localized_name": "offload_cache",
-          "name": "offload_cache",
-          "type": "BOOLEAN",
-          "widget": {
-            "name": "offload_cache"
-          },
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "localized_name": "output",
-          "name": "output",
-          "type": "*",
-          "links": [
-            20
-          ]
-        }
-      ],
-      "title": "\ud83c\udf88 VRAM-Cleanup (Free 5.5GB Text Encoder)",
-      "properties": {
-        "Node name for S&R": "VRAMCleanup",
-        "cnr_id": "comfyui_memory_cleanup"
-      },
-      "widgets_values": [
-        true,
-        true
-      ],
-      "widgets_values_named": {
-        "offload_model": true,
-        "offload_cache": true
-      },
-      "color": "#332922",
-      "bgcolor": "#593930"
-    },
-    {
       "id": 18,
       "type": "QwenPanoramaUpscale",
       "pos": [
@@ -1082,14 +1016,6 @@
       "VAE"
     ],
     [
-      8,
-      7,
-      0,
-      17,
-      0,
-      "CONDITIONING"
-    ],
-    [
       9,
       7,
       1,
@@ -1146,14 +1072,6 @@
       "STRING"
     ],
     [
-      20,
-      17,
-      0,
-      8,
-      1,
-      "CONDITIONING"
-    ],
-    [
       21,
       9,
       0,
@@ -1184,6 +1102,14 @@
       15,
       0,
       "IMAGE"
+    ],
+    [
+      8,
+      7,
+      0,
+      8,
+      1,
+      "CONDITIONING"
     ]
   ],
   "groups": [

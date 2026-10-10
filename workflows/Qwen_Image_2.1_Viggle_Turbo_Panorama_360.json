@@ -1228,13 +1228,13 @@
       },
       "widgets_values": [
         80,
-        true,
+        false,
         0.5,
         ""
       ],
       "widgets_values_named": {
         "default_fov": 80,
-        "auto_rotate": true,
+        "auto_rotate": false,
         "auto_rotate_speed": 0.5,
         "panorama_viewer": ""
       }

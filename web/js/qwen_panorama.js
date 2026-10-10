@@ -258,15 +258,28 @@ app.registerExtension({
                 });
                 resizeObserver.observe(container);
 
-                // Mouse interaction
-                canvas.addEventListener("mousedown", (e) => {
+                // Mouse interaction - strictly only moves when actively dragging with left mouse button
+                canvas.addEventListener("pointerdown", (e) => {
+                    if (e.button !== 0) return; // Left mouse button only
+                    e.stopPropagation();
+                    e.preventDefault();
                     renderer.isDragging = true;
                     renderer.lastMouse = { x: e.clientX, y: e.clientY };
+                    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
                     canvas.style.cursor = "grabbing";
                 });
 
-                window.addEventListener("mousemove", (e) => {
+                canvas.addEventListener("pointermove", (e) => {
                     if (!renderer.isDragging) return;
+                    if (e.buttons !== 1) {
+                        // Button released elsewhere or not held down: immediately stop dragging
+                        renderer.isDragging = false;
+                        canvas.style.cursor = "grab";
+                        try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+                        return;
+                    }
+                    e.stopPropagation();
+                    e.preventDefault();
                     const dx = e.clientX - renderer.lastMouse.x;
                     const dy = e.clientY - renderer.lastMouse.y;
                     renderer.lastMouse = { x: e.clientX, y: e.clientY };
@@ -278,15 +291,20 @@ app.registerExtension({
                     renderer.render();
                 });
 
-                window.addEventListener("mouseup", () => {
+                const stopDrag = (e) => {
                     if (renderer.isDragging) {
                         renderer.isDragging = false;
                         canvas.style.cursor = "grab";
+                        try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
                     }
-                });
+                };
+
+                canvas.addEventListener("pointerup", stopDrag);
+                canvas.addEventListener("pointercancel", stopDrag);
 
                 // Zoom (FOV)
                 canvas.addEventListener("wheel", (e) => {
+                    e.stopPropagation();
                     e.preventDefault();
                     const delta = Math.sign(e.deltaY) * 0.08;
                     renderer.fov = Math.max(0.4, Math.min(2.0, renderer.fov + delta));

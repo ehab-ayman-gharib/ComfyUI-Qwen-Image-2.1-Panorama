@@ -682,7 +682,7 @@
       },
       "widgets_values": [
         80,
-        true,
+        false,
         0.5
       ],
       "widgets_values_named": {

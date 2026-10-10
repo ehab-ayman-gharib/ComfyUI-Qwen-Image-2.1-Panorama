@@ -187,8 +187,8 @@ class QwenPanorama360Viewer:
                     "tooltip": "Initial camera field-of-view in degrees."
                 }),
                 "auto_rotate": ("BOOLEAN", {
-                    "default": True,
-                    "tooltip": "Enable smooth turntable rotation when idle."
+                    "default": False,
+                    "tooltip": "Enable smooth rotation when idle (disabled by default; viewer remains static)."
                 }),
                 "auto_rotate_speed": ("FLOAT", {
                     "default": 0.5, "min": 0.1, "max": 3.0, "step": 0.1,
@@ -205,7 +205,7 @@ class QwenPanorama360Viewer:
     CATEGORY = "QwenPanorama"
     DESCRIPTION = "Interactive in-canvas 360° VR equirectangular sphere viewer. Supports mouse dragging, wheel FOV zoom, and full-screen VR preview inside ComfyUI."
 
-    def view_panorama(self, images, default_fov=80, auto_rotate=True, auto_rotate_speed=0.5):
+    def view_panorama(self, images, default_fov=80, auto_rotate=False, auto_rotate_speed=0.5):
         temp_dir = folder_paths.get_temp_directory()
         results = []
 

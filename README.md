@@ -5,11 +5,12 @@ Transform any single 2D photo into a seamless **360° Equirectangular VR Panoram
 Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly under **7.0 GB peak VRAM**.
 
 <p align="center">
-  <video src="docs/showcase_16x9.mp4" controls="controls" width="100%" poster="docs/showcase_preview.jpg">
-    <a href="docs/showcase_16x9.mp4"><img src="docs/showcase_preview.jpg" alt="Qwen 360 Panorama Showcase" width="100%"></a>
-  </video>
+  <a href="docs/showcase_16x9.mp4">
+    <img src="docs/showcase.gif" alt="Qwen 360 Panorama Spatial Expansion Showcase" width="100%">
+  </a>
+  <br>
+  <em>🌐 Spatial expansion demo (2D portrait seed input &rarr; seamless 360° VR world). <b>Click image to open full 1080p video</b>.</em>
 </p>
-<p align="center"><em>Spatial expansion demo: 2D portrait seed input &rarr; seamless 360° VR equirectangular world.</em></p>
 
 ---
 

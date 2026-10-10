@@ -31,7 +31,7 @@ class QwenPanoramaPrompt:
                     "indoor warm architectural ambient lighting",
                     "cyberpunk neon glow with reflections"
                 ], {
-                    "default": "bright midday sun with clear blue sky",
+                    "default": "default",
                     "tooltip": "Atmospheric lighting to enforce across the full 360° spherical horizon."
                 }),
                 "environment_type": ([
@@ -42,7 +42,7 @@ class QwenPanoramaPrompt:
                     "aerial cliffside vista",
                     "custom"
                 ], {
-                    "default": "outdoor natural landscape",
+                    "default": "custom",
                     "tooltip": "Broad environment setting for the spherical scene."
                 }),
             },

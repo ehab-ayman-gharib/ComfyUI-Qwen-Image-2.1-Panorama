@@ -22,11 +22,13 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
   - Smooth drag-to-look (yaw/pitch) with zero gimbal lock.
   - Mouse-wheel FOV zoom (40° to 120°).
   - 1-click Fullscreen VR preview.
-- **Strict 2:1 Native Aspect Ratio**: Generates at `1472×736` (1.08 MP, exact 2:1, multiple of 32) ensuring spherical geometric accuracy and 100% VRAM residency without PCIe weight offloading.
-- **Instant Seamless 2K VR Upscaling**: `QwenPanoramaUpscale` with circular seam-wrapping (`seamless_boundary: true`) upgrades 1472×736 to crisp 2048×1024 2K VR in < 1 second.
+- **Qwen 360 Panorama Latent (2:1)**: Built-in custom latent generator ensuring exact 2:1 equirectangular spherical aspect ratios and 64-channel initialization for Qwen-Image 2.1 DiT + Wan 2.2 VAE:
+  - **Native Best Quality is 2K (`2048×1024`)**: Recommended for production quality, delivering razor-sharp VR skyboxes and fine landscape textures directly in latent space.
+  - **Fast Draft Presets**: `1472×736`, `1536×768`, or `1024×512` for ultra-fast iteration and tight 8GB VRAM budgets.
+- **Seamless 2K & 4K VR Upscaling**: `QwenPanoramaUpscale` with 5% circular toroidal boundary wrapping (`seamless_boundary: true`) upscales native 2K panoramas to **4K Ultra VR (`4096×2048`)** (or draft renders to 2K) in seconds with zero vertical boundary seams.
 - **Dual Pipeline Support**:
   - **⚡ Fast Turbo Mode (~20–30s)**: 9 steps via Viggle Turbo v0.3 LoRA & custom refined sigmas (7 turbo + 2 high-precision detail refinement steps).
-  - **💎 Full Quality Mode (< 2 min)**: 25 steps via native Euler sampler for pristine 2K VR skyboxes.
+  - **💎 Full Quality Mode (< 2 min)**: 25 steps via native Euler sampler for pristine 2K VR production skyboxes.
 - **Smart 360 Export**:
   - Standard Equirectangular PNG / WebP.
   - Automatic **Google Photo Sphere XMP metadata injection** into JPEG so Facebook, Google Photos, and VR headsets auto-detect and render it as an interactive 360 sphere.
@@ -80,11 +82,11 @@ All custom nodes are categorized under `QwenPanorama`:
 
 | Node Name | Category | Primary Function | Key Parameters |
 | :--- | :--- | :--- | :--- |
-| **Qwen 360 Panorama Prompt** | `QwenPanorama` | Constructs formatted 360° trigger prompts with lighting and scene environment modifiers. | `scene_description`, `lighting`, `environment_type` |
-| **Qwen 360 Panorama Latent (2:1)** | `QwenPanorama` | Generates 64-channel empty latents snapped to exact 2:1 spherical dimensions (multiples of 64). | `resolution_preset`, `custom_width`, `batch_size` |
+| **Qwen 360 Panorama Prompt** | `QwenPanorama` | Constructs formatted 360° trigger prompts with lighting and environment modifiers. Defaults: `lighting: default` and `environment_type: custom` for unconstrained scene prompting. | `scene_description`, `lighting` (default: "default"), `environment_type` (default: "custom") |
+| **Qwen 360 Panorama Latent (2:1)** | `QwenPanorama` | Generates 64-channel empty latents snapped to exact 2:1 spherical dimensions (multiples of 64). Recommended **Best Quality setting is 2K (`2048×1024`)** for pristine VR fidelity; draft presets (`1472×736`, `1024×512`) also included. | `resolution_preset` (default: 2048×1024 2K), `custom_width`, `batch_size` |
 | **Qwen 360 VR Panorama Viewer** | `QwenPanorama` | Interactive WebGL in-canvas 360° viewer with yaw/pitch dragging and FOV zoom. | `images`, `default_fov`, `auto_rotate` |
 | **Qwen 360 Panorama Export** | `QwenPanorama` | Exports with Google Photo Sphere XMP metadata and optional rotating MP4 flythrough video. | `format`, `export_rotating_video`, `video_duration_seconds` |
-| **Qwen 360 Panorama Upscale (2K/4K)** | `QwenPanorama` | Seamless 2:1 upscaler with 5% toroidal boundary wrapping to prevent vertical seam artifacts. | `target_resolution`, `seamless_boundary`, `upscale_method` |
+| **Qwen 360 Panorama Upscale (2K/4K)** | `QwenPanorama` | Seamless 2:1 upscaler with 5% toroidal boundary wrapping to prevent vertical seam artifacts. Upscales production 2K renders to **4K Ultra VR (`4096×2048`)** or draft renders to **2K (`2048×1024`)**. | `target_resolution` (2K / 4K / Custom), `seamless_boundary`, `upscale_method` |
 | **Qwen 360 Panorama Seam Extract (Step 1)** | `QwenPanorama` | Rolls by 50% to place seam at center and crops narrow vertical strip for fast inpainting. | `image`, `crop_width` (default: 512px) |
 | **Qwen 360 Panorama Seam Restore (Step 2)** | `QwenPanorama` | Blends healed crop back using cosine feathered alpha masking and unrolls to original orientation. | `healed_crop`, `seam_context`, `feather_width` |
 | **Qwen 360 Panorama Horizontal Roll** | `QwenPanorama` | Horizontally shifts equirectangular image and synced mask along the cylindrical axis. | `mode` (Roll 50% / Unroll / Custom), `mask` |

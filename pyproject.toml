@@ -1,0 +1,19 @@
+[project]
+name = "comfyui-qwen-image-2.1-panorama"
+description = "Transform single 2D photos into seamless 360° Equirectangular VR Panoramas using Qwen-Image 2.1 in ComfyUI with interactive WebGL VR viewer and 2K/4K upscaler."
+version = "0.3.0"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+dependencies = [
+    "torch",
+    "numpy",
+    "Pillow"
+]
+
+[project.urls]
+Repository = "https://github.com/ehab-ayman-gharib/ComfyUI-Qwen-Image-2.1-Panorama"
+
+[tool.comfy]
+PublisherId = "ehab-ayman-gharib"
+DisplayName = "ComfyUI-Qwen-Image-2.1-Panorama"
+Icon = ""

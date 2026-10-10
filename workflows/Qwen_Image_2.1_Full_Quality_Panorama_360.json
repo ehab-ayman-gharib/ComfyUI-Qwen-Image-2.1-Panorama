@@ -8,12 +8,12 @@
       "id": 1,
       "type": "MarkdownNote",
       "pos": [
-        -580.0,
-        100.0
+        -580,
+        100
       ],
       "size": [
-        540.0,
-        950.0
+        540,
+        950
       ],
       "flags": {},
       "order": 0,
@@ -35,12 +35,12 @@
       "id": 2,
       "type": "UnetLoaderGGUF",
       "pos": [
-        40.0,
-        100.0
+        40,
+        100
       ],
       "size": [
-        360.0,
-        82.0
+        380,
+        82
       ],
       "flags": {},
       "order": 1,
@@ -74,18 +74,19 @@
       ],
       "widgets_values_named": {
         "unet_name": "qwen_image_2.1_Q5_K_M.gguf"
-      }
+      },
+      "title": "Unet Loader (GGUF Q5_K_M)"
     },
     {
       "id": 4,
       "type": "CLIPLoader",
       "pos": [
-        40.0,
-        385.0
+        40,
+        540
       ],
       "size": [
-        360.0,
-        106.0
+        380,
+        106
       ],
       "flags": {},
       "order": 2,
@@ -142,18 +143,19 @@
         "clip_name": "qwen3vl_8b_w4a8.safetensors",
         "type": "qwen_image",
         "device": "default"
-      }
+      },
+      "title": "CLIP Loader (Qwen3-VL 8B W4A8)"
     },
     {
       "id": 5,
       "type": "VAELoader",
       "pos": [
-        40.0,
-        545.0
+        40,
+        700
       ],
       "size": [
-        360.0,
-        82.0
+        380,
+        82
       ],
       "flags": {},
       "order": 3,
@@ -188,18 +190,19 @@
       ],
       "widgets_values_named": {
         "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
-      }
+      },
+      "title": "VAE Loader (Wan 2.2 BF16)"
     },
     {
       "id": 6,
       "type": "LoadImage",
       "pos": [
-        560.0,
-        100.0
+        510,
+        100
       ],
       "size": [
-        380.0,
-        310.0
+        400,
+        340
       ],
       "flags": {},
       "order": 4,
@@ -250,17 +253,18 @@
       "widgets_values_named": {
         "image": "Gemini_Generated_Image_n0nhkn0nhkn0nhkn.png",
         "upload": "image"
-      }
+      },
+      "title": "Load Reference Photo (Center Anchor)"
     },
     {
       "id": 13,
       "type": "QwenPanoramaPrompt",
       "pos": [
-        1060.0,
-        100.0
+        1000,
+        100
       ],
       "size": [
-        440,
+        420,
         260
       ],
       "flags": {},
@@ -332,8 +336,8 @@
       },
       "widgets_values": [
         "A serene alpine lake below snow-capped peaks, evergreen forest, bright midday sun under a clear blue sky.",
-        "bright midday sun with clear blue sky",
-        "outdoor natural landscape",
+        "default",
+        "custom",
         "high fidelity equirectangular projection, seamless 360 horizon.",
         "blurry, low quality, distorted poles, broken seams, disfigured architecture."
       ],
@@ -353,12 +357,12 @@
       "id": 7,
       "type": "TextEncodeQwenImage21",
       "pos": [
-        1600.0,
-        100.0
+        1000,
+        420
       ],
       "size": [
-        380.0,
-        340.0
+        420,
+        360
       ],
       "flags": {},
       "order": 12,
@@ -469,18 +473,19 @@
         "prompt": "",
         "negative_prompt": "",
         "resolution": 768
-      }
+      },
+      "title": "Text Encode Qwen Image 2.1"
     },
     {
       "id": 8,
       "type": "KSampler",
       "pos": [
-        1600.0,
-        500.0
+        1510,
+        100
       ],
       "size": [
-        380.0,
-        380.0
+        380,
+        380
       ],
       "flags": {},
       "order": 13,
@@ -595,18 +600,19 @@
         "sampler_name": "euler",
         "scheduler": "simple",
         "denoise": 1
-      }
+      },
+      "title": "KSampler (25-Step Euler / Full Quality)"
     },
     {
       "id": 9,
       "type": "VAEDecode",
       "pos": [
-        1600.0,
-        940.0
+        1510,
+        530
       ],
       "size": [
-        380.0,
-        90.0
+        380,
+        90
       ],
       "flags": {},
       "order": 14,
@@ -637,18 +643,19 @@
       ],
       "properties": {
         "Node name for S&R": "VAEDecode"
-      }
+      },
+      "title": "VAE Decode"
     },
     {
       "id": 16,
       "type": "QwenPanorama360Viewer",
       "pos": [
-        2520.0,
-        100.0
+        1980,
+        100
       ],
       "size": [
-        500,
-        420
+        460,
+        930
       ],
       "flags": {},
       "order": 16,
@@ -686,12 +693,12 @@
       "id": 10,
       "type": "PreviewImage",
       "pos": [
-        2680.0,
-        100.0
+        2480,
+        100
       ],
       "size": [
-        480.0,
-        600.0
+        580,
+        500
       ],
       "flags": {},
       "order": 15,
@@ -721,12 +728,12 @@
       "id": 15,
       "type": "QwenPanoramaExport",
       "pos": [
-        2520.0,
-        760.0
+        2480,
+        650
       ],
       "size": [
-        420,
-        200
+        580,
+        220
       ],
       "flags": {},
       "order": 17,
@@ -810,12 +817,12 @@
       "id": 18,
       "type": "QwenPanoramaUpscale",
       "pos": [
-        2000.0,
-        940.0
+        1510,
+        680
       ],
       "size": [
-        360,
-        160
+        380,
+        200
       ],
       "flags": {},
       "order": 15,
@@ -917,11 +924,11 @@
       "id": 20,
       "type": "QwenImage21Cache",
       "pos": [
-        440,
-        240
+        40,
+        400
       ],
       "size": [
-        320,
+        380,
         82
       ],
       "flags": {},
@@ -980,12 +987,12 @@
       "id": 12,
       "type": "QwenPanoramaLatent",
       "pos": [
-        880,
-        740
+        510,
+        500
       ],
       "size": [
-        360,
-        130
+        400,
+        180
       ],
       "flags": {},
       "order": 7,
@@ -1033,11 +1040,11 @@
       "id": 3,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        440,
-        100
+        40,
+        240
       ],
       "size": [
-        360,
+        380,
         106
       ],
       "flags": {},
@@ -1225,76 +1232,70 @@
   ],
   "groups": [
     {
-      "id": 0,
       "title": "\ud83d\udcd6 Complete User Guide & Pipeline Instructions",
       "bounding": [
-        -610.0,
-        40.0,
-        600.0,
-        1050.0
+        -610,
+        40,
+        600,
+        1050
       ],
-      "color": "#432874",
-      "flags": {}
+      "color": "#3f789e",
+      "font_size": 24
     },
     {
-      "id": 1,
-      "title": "1. Model & Panorama LoRA Stack",
+      "title": "1. Model & LoRA Stack (Pano360 + Cache)",
       "bounding": [
-        10.0,
-        40.0,
-        420.0,
-        630.0
+        10,
+        40,
+        440,
+        1050
       ],
-      "color": "#1e3a5f",
-      "flags": {}
+      "color": "#2a363b",
+      "font_size": 24
     },
     {
-      "id": 2,
       "title": "2. Input Reference Image & 2:1 Ratio Latent",
       "bounding": [
-        440.0,
-        40.0,
-        520.0,
-        1250.0
+        480,
+        40,
+        460,
+        1050
       ],
-      "color": "#1b4332",
-      "flags": {}
+      "color": "#2a4d3b",
+      "font_size": 24
     },
     {
-      "id": 3,
-      "title": "3. Camera Panorama & Elevation Controls",
+      "title": "3. 360 Panorama Prompt & Conditioning",
       "bounding": [
-        1030.0,
-        40.0,
-        480.0,
-        840.0
+        970,
+        40,
+        480,
+        1050
       ],
-      "color": "#7c3aed",
-      "flags": {}
+      "color": "#4a2a4d",
+      "font_size": 24
     },
     {
-      "id": 4,
-      "title": "4. Conditioning, Sampling & Latent Decode",
+      "title": "4. Full 25-Step Euler Sampler & VAE Decode",
       "bounding": [
-        1570.0,
-        40.0,
-        440.0,
-        1030.0
+        1480,
+        40,
+        440,
+        1050
       ],
-      "color": "#581c87",
-      "flags": {}
+      "color": "#4d3b2a",
+      "font_size": 24
     },
     {
-      "id": 5,
-      "title": "5. Seamless 360\u00b0 VR Viewer & Exports",
+      "title": "5. Seamless 360\u00b0 VR Viewer, Preview & Export",
       "bounding": [
-        2070.0,
-        40.0,
-        1120.0,
-        1070.0
+        1950,
+        40,
+        1150,
+        1050
       ],
-      "color": "#0f766e",
-      "flags": {}
+      "color": "#2a404d",
+      "font_size": 24
     }
   ],
   "config": {},

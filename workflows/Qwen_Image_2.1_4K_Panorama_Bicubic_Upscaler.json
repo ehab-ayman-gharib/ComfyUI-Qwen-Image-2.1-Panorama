@@ -1,0 +1,429 @@
+{
+  "id": "c1f83a29-d54b-48ae-94a1-8d2b7e193021",
+  "revision": 0,
+  "last_node_id": 7,
+  "last_link_id": 5,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "pos": [
+        -500,
+        100
+      ],
+      "size": [
+        460,
+        560
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "🔍 Guide: 4K 360° Panorama Bicubic Upscaler (Baseline)",
+      "properties": {},
+      "widgets_values": [
+        "# 📐 4K 360° Panorama Bicubic Upscaler (Baseline)\n\nPure mathematical, zero-model, instantaneous upscaling benchmark for 360° equirectangular panoramas!\n\n### ⚙️ Pipeline Specifications\n• **Algorithm**: Antialiased Toroidal Bicubic Interpolation (`QwenPanoramaUpscale`).\n• **Instant Execution**: Takes < 0.05 seconds with virtually **0 GB VRAM** overhead.\n• **5% Toroidal Boundary Seam Wrap (`seamless_boundary: true`)**: Clones 5% opposite margins across edges before interpolating, ensuring the $0^\\circ / 360^\\circ$ wrap line is 100% seamless without vertical stitch lines.\n• **Resolution Target**: Native $2048 \\times 1024$ (2K) $\\to$ **$4096 \\times 2048$ (4K Ultra VR 2:1)**.\n• **Interactive 360° VR Viewer**: Drag with the mouse to inspect any angle of the upscaled 4K world directly in ComfyUI.\n• **Metadata Export**: Injects standard Google Photo Sphere XMP metadata so output PNG/JPG automatically triggers 360° VR playback on VR headsets, Google, and Facebook.\n\n---\n\n### 🚀 Quick Start Instructions\n1. Drop any generated 2K panorama (from our generation workflow) into **[Input 2K Panorama Image]**.\n2. Click **Queue Prompt**: your 4K equirectangular panorama will be ready instantaneously!\n3. Compare this baseline directly with **`Qwen_Image_2.1_4K_Panorama_Upscaler`** (RealESRGAN 2×) to see the neural detail difference."
+      ],
+      "widgets_values_named": {
+        "text": "# 📐 4K 360° Panorama Bicubic Upscaler (Baseline)\n\nPure mathematical, zero-model upscaling benchmark for 360° equirectangular panoramas!\n\n• **Algorithm**: Antialiased Bicubic Interpolation\n• **Resolution**: 2048x1024 (2K) -> 4096x2048 (4K)\n• **Seamless Seam Fix**: 5% toroidal boundary wrapping eliminates stitch lines."
+      },
+      "color": "#2a3a4a",
+      "bgcolor": "#1d2833"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        20,
+        100
+      ],
+      "size": [
+        380,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1,
+            2
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "title": "Input 2K Panorama Image",
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "example.png",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "PreviewImage",
+      "pos": [
+        440,
+        100
+      ],
+      "size": [
+        380,
+        220
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [],
+      "title": "Original 2K Reference Preview",
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 4,
+      "type": "QwenPanoramaUpscale",
+      "pos": [
+        440,
+        380
+      ],
+      "size": [
+        380,
+        240
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2
+        },
+        {
+          "localized_name": "target_resolution",
+          "name": "target_resolution",
+          "type": "COMBO",
+          "widget": {
+            "name": "target_resolution"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "upscale_method",
+          "name": "upscale_method",
+          "type": "COMBO",
+          "widget": {
+            "name": "upscale_method"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_scale",
+          "name": "custom_scale",
+          "type": "FLOAT",
+          "widget": {
+            "name": "custom_scale"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seamless_boundary",
+          "name": "seamless_boundary",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "seamless_boundary"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "🔍 Qwen 360 Panorama Upscale (Bicubic 2K -> 4K)",
+      "properties": {
+        "Node name for S&R": "QwenPanoramaUpscale"
+      },
+      "widgets_values": [
+        "4096x2048 (4K Ultra VR 2:1)",
+        "bicubic",
+        1.333,
+        true
+      ],
+      "widgets_values_named": {
+        "target_resolution": "4096x2048 (4K Ultra VR 2:1)",
+        "upscale_method": "bicubic",
+        "custom_scale": 1.333,
+        "seamless_boundary": true
+      },
+      "color": "#2a3a4a",
+      "bgcolor": "#1d2833"
+    },
+    {
+      "id": 5,
+      "type": "QwenPanorama360Viewer",
+      "pos": [
+        860,
+        100
+      ],
+      "size": [
+        460,
+        460
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "🌐 Interactive 360° VR Viewer (4K Bicubic)",
+      "properties": {
+        "Node name for S&R": "QwenPanorama360Viewer"
+      },
+      "widgets_values": [
+        80,
+        false,
+        0.5,
+        ""
+      ],
+      "widgets_values_named": {
+        "default_fov": 80,
+        "auto_rotate": false,
+        "auto_rotate_speed": 0.5,
+        "panorama_viewer": ""
+      }
+    },
+    {
+      "id": 6,
+      "type": "PreviewImage",
+      "pos": [
+        1360,
+        100
+      ],
+      "size": [
+        540,
+        460
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [],
+      "title": "Equirectangular 4K Flat Preview",
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 7,
+      "type": "QwenPanoramaExport",
+      "pos": [
+        860,
+        620
+      ],
+      "size": [
+        540,
+        240
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "saved_paths",
+          "name": "saved_paths",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "📦 Qwen 360 Panorama Export (4K Ultra VR)",
+      "properties": {
+        "Node name for S&R": "QwenPanoramaExport"
+      },
+      "widgets_values": [
+        "Qwen_4K_Panorama_Bicubic",
+        "PNG",
+        true,
+        false,
+        10,
+        30
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "Qwen_4K_Panorama_Bicubic",
+        "format": "PNG",
+        "inject_spherical_metadata": true,
+        "generate_spin_video": false,
+        "video_duration": 10,
+        "video_framerate": 30
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      4,
+      4,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      4,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Step 1: Input Panorama",
+      "bounding": [
+        0,
+        40,
+        415,
+        580
+      ],
+      "color": "#3f3f46"
+    },
+    {
+      "id": 2,
+      "title": "Step 2: 360 Seamless Bicubic Interpolation (2K -> 4K)",
+      "bounding": [
+        425,
+        40,
+        410,
+        580
+      ],
+      "color": "#2a3a4a"
+    },
+    {
+      "id": 3,
+      "title": "Step 3: 4K VR Preview, 360 Interactive Inspection & Export",
+      "bounding": [
+        845,
+        40,
+        1080,
+        840
+      ],
+      "color": "#1e3a8a"
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.85,
+      "offset": [
+        550,
+        50
+      ]
+    }
+  },
+  "version": 0.4
+}

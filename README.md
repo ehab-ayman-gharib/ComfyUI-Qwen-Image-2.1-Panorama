@@ -66,16 +66,25 @@ pip install -r ComfyUI-Qwen-Image-2.1-Panorama/requirements.txt
 | **Turbo LoRA** *(Optional)* | `Qwen-Image-2.1-viggle-turbo-v0.3-6step-lora-r128.safetensors` | 315 MB | `models/loras/` | [Hugging Face](https://huggingface.co/ViggleAI/Qwen-Image-2.1-viggle-turbo) |
 | **Text Encoder** | `qwen3vl_8b_w4a8.safetensors` | 5.8 GB | `models/text_encoders/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
 | **VAE** | `qwen_image_2.1_vae_bf16.safetensors` | 496 MB | `models/vae/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
+| **2× Upscaler** *(Optional)* | `RealESRGAN_x2plus.pth` | 64 MB | `models/upscale_models/` | [GitHub](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth) |
+| **4× Upscaler** *(Optional)* | `RealESRGAN_x4plus.pth` | 64 MB | `models/upscale_models/` | [GitHub](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth) |
 
 ---
 
 ## 🚀 Workflows Included
 
-Both production-ready workflow JSON files are powered by the **360 Panorama LoRA** (`pano360_qwen21_edit_v1.safetensors`) and located in `workflows/`:
+All production-ready workflow JSON files are located in `workflows/` and can be loaded directly in ComfyUI:
+
+### Generation Workflows (Image-to-Pano & Text-to-Pano)
 1. `Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`: 9-step dual-LoRA stack (Pano360 LoRA + Viggle Turbo v0.3) for ultra-fast drafts (~20s generation on 8GB VRAM).
 2. `Qwen_Image_2.1_Full_Quality_Panorama_360.json`: 25-step production 2K render (`2048×1024`) driven by the Pano360 LoRA and native Euler sampler for pristine spherical skyboxes.
 
-Simply drag and drop either JSON file directly into your ComfyUI window!
+### Standalone 360° Super-Resolution Workflows (Zero Boundary Seams)
+3. `Qwen_Image_2.1_4K_Panorama_Upscaler.json`: Production 2× neural super-resolution via `RealESRGAN_x2plus.pth` (2K $\to$ **4K Ultra VR** in ~2s with 5% toroidal boundary wrapping).
+4. `Qwen_Image_2.1_8K_Panorama_Upscaler.json`: Extreme 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP** in ~10s with 5% toroidal boundary wrapping).
+5. `Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`: Instant mathematical baseline upscaler (<0.05s, 0 GB VRAM) for direct side-by-side benchmarking against neural models.
+
+Simply drag and drop any JSON file directly into your ComfyUI window!
 
 ### 💡 How to Generate from Text Only (Pure Text-to-Panorama)
 Both workflows support pure Text-to-Panorama generation out-of-the-box without needing any separate workflow:

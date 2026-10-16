@@ -5,6 +5,7 @@ from PIL import Image
 import folder_paths
 import subprocess
 import comfy.model_management
+import comfy.utils
 
 class QwenPanoramaPrompt:
     """
@@ -503,6 +504,123 @@ class QwenPanoramaUpscale:
         out = cropped.permute(0, 2, 3, 1).clamp(0.0, 1.0)
         info_str = f"Seamless 360 Upscaled: {W}x{H} -> {target_w}x{target_h} ({upscale_method})"
         return (out, target_w, target_h, info_str)
+
+
+class QwenPanoramaModelUpscale:
+    """
+    All-in-One 360° Equirectangular Neural Model Upscaler with Seam Elimination.
+    Pre-pads 5% toroidal boundary wrapping across left and right edges, executes the loaded
+    upscale model (RealESRGAN_x2plus, 4x-UltraSharp, etc.) with automatic full-frame or tiled
+    VRAM management, crops out the padding, and outputs a mathematically seamless 360° panorama.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "upscale_model": ("UPSCALE_MODEL", {
+                    "tooltip": "Neural upscale model loaded via 'Load Upscale Model' (e.g. RealESRGAN_x2plus.pth)."
+                }),
+                "image": ("IMAGE", {
+                    "tooltip": "2:1 equirectangular 360° panorama image to upscale."
+                }),
+            },
+            "optional": {
+                "seamless_boundary": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Enable 5% toroidal boundary wrapping so the left and right edges are upscaled with continuous context, eliminating vertical stitch line artifacts."
+                }),
+                "wrap_percent": ("FLOAT", {
+                    "default": 0.05, "min": 0.01, "max": 0.15, "step": 0.01,
+                    "tooltip": "Percentage of image width cloned to opposite margins (5% recommended)."
+                }),
+                "processing_mode": ([
+                    "Full Frame (Best Quality)",
+                    "Tiled (1024)",
+                    "Tiled (Low VRAM 512)"
+                ], {
+                    "default": "Full Frame (Best Quality)",
+                    "tooltip": "Processing mode. Full Frame processes the entire panorama at once without tile boundaries; Tiled saves VRAM on lower-end GPUs."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "INT", "INT", "STRING")
+    RETURN_NAMES = ("image", "width", "height", "info")
+    OUTPUT_TOOLTIPS = (
+        "Upscaled seamless equirectangular 360° panorama image.",
+        "Target width in pixels.",
+        "Target height in pixels.",
+        "Summary information of the upscale process."
+    )
+    FUNCTION = "upscale_seamless"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Seamless 360° equirectangular model upscaler. Uses toroidal boundary wrapping to eliminate vertical stitch lines when upscaling with learned models (RealESRGAN_x2plus, 4x-UltraSharp)."
+
+    def upscale_seamless(self, upscale_model, image, seamless_boundary=True, wrap_percent=0.05, processing_mode="Full Frame (Best Quality)"):
+        device = upscale_model.patcher.load_device
+        B, H, W, C = image.shape
+        scale = getattr(upscale_model, "scale", 2.0)
+
+        # Step 1: Pre-pad 5% toroidal boundary if enabled
+        if seamless_boundary:
+            pad_w = max(16, int(round(W * wrap_percent)))
+            # Align padding to 8 pixels for neural models
+            pad_w = ((pad_w + 7) // 8) * 8
+            left_pad = image[:, :, -pad_w:, :]
+            right_pad = image[:, :, :pad_w, :]
+            padded = torch.cat([left_pad, image, right_pad], dim=2)
+            pad_target = int(round(pad_w * scale))
+            target_w = int(round(W * scale))
+            target_h = int(round(H * scale))
+        else:
+            padded = image
+            pad_w = 0
+            pad_target = 0
+            target_w = int(round(W * scale))
+            target_h = int(round(H * scale))
+
+        # Step 2: Manage VRAM & Load Model
+        memory_required = (512 * 512 * 3) * padded.element_size() * max(scale, 1.0) * 384.0
+        memory_required += padded.nelement() * padded.element_size()
+        comfy.model_management.load_models_gpu([upscale_model.patcher], memory_required=memory_required, force_full_load=True)
+
+        in_img = padded.movedim(-1, -3).to(device)
+
+        # Tile size determination
+        if processing_mode == "Tiled (Low VRAM 512)":
+            tile = 512
+        elif processing_mode == "Tiled (1024)":
+            tile = 1024
+        else:
+            # Full Frame (Best Quality)
+            tile = max(in_img.shape[3], in_img.shape[2], 2048)
+
+        overlap = 32
+        output_device = comfy.model_management.intermediate_device()
+
+        oom = True
+        while oom:
+            try:
+                steps = in_img.shape[0] * comfy.utils.get_tiled_scale_steps(in_img.shape[3], in_img.shape[2], tile_x=tile, tile_y=tile, overlap=overlap)
+                pbar = comfy.utils.ProgressBar(steps)
+                s = comfy.utils.tiled_scale(in_img, lambda a: upscale_model(a.float()), tile_x=tile, tile_y=tile, overlap=overlap, upscale_amount=scale, pbar=pbar, output_device=output_device)
+                oom = False
+            except Exception as e:
+                comfy.model_management.raise_non_oom(e)
+                tile //= 2
+                if tile < 128:
+                    raise e
+
+        # Step 3: Format & Crop
+        upscaled = torch.clamp(s.movedim(-3, -1), min=0.0, max=1.0).to(comfy.model_management.intermediate_dtype())
+
+        if pad_target > 0:
+            cropped = upscaled[:, :, pad_target : pad_target + target_w, :]
+        else:
+            cropped = upscaled
+
+        info_str = f"Seamless 360 {scale}x Upscaled: {W}x{H} -> {target_w}x{target_h} (RealESRGAN / Neural)"
+        return (cropped, target_w, target_h, info_str)
 
 
 class QwenPanoramaSeamExtract:

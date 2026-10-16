@@ -1,0 +1,441 @@
+{
+  "id": "7b2c5e81-91a3-4d64-8f43-1e5f8849b3c2",
+  "revision": 0,
+  "last_node_id": 8,
+  "last_link_id": 5,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "pos": [
+        -500,
+        100
+      ],
+      "size": [
+        460,
+        600
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "🔍 Guide: 4K 360° Panorama Upscaler (RealESRGAN 2x + Seam Fix)",
+      "properties": {},
+      "widgets_values": [
+        "# 🌐 4K 360° Panorama Super-Resolution\n\nHigh-speed 2× neural upscaling for 360° equirectangular panoramas!\n\n### ⚙️ Pipeline Specifications\n• **Upscale Model**: `RealESRGAN_x2plus.pth` (Official 2× Super-Resolution model)\n• **Native Scaling ($2K \\to 4K$)**: Scales native $2048 \\times 1024$ input directly to pristine **$4096 \\times 2048$ (4K Ultra VR 2:1)** in ~2–3 seconds without downsampling blur.\n• **5% Toroidal Boundary Seam Wrap (`seamless_boundary: true`)**: Clones 5% opposite margins across edges during the neural model pass, ensuring the $0^\\circ / 360^\\circ$ wrap line is 100% seamless without vertical stitch lines.\n• **Processing Mode**: Full Frame (Best Quality) processes the entire sphere at once for unbroken global coherence.\n• **Interactive 360° VR Viewer**: Drag with the mouse to inspect any angle of the upscaled 4K world directly in ComfyUI.\n• **Metadata Export**: Injects standard Google Photo Sphere XMP metadata so output PNG/JPG automatically triggers 360° VR playback on VR headsets, Google, and Facebook.\n\n---\n\n### 🚀 Quick Start Instructions\n1. Drop any generated 2K panorama (from our generation workflow) into **[Input 2K Panorama Image]**.\n2. Ensure `RealESRGAN_x2plus.pth` is selected in **[Load Upscale Model]**.\n3. Click **Queue Prompt**: your 4K equirectangular panorama will be ready and displayed in the 360 viewer in seconds!"
+      ],
+      "widgets_values_named": {
+        "text": "# 🌐 4K 360° Panorama Super-Resolution\n\nHigh-speed 2× neural upscaling for 360° equirectangular panoramas!\n\n• **Model**: `RealESRGAN_x2plus.pth`\n• **Resolution**: 2048x1024 (2K) -> 4096x2048 (4K)\n• **Seamless Seam Fix**: 5% toroidal boundary wrapping eliminates stitch lines."
+      },
+      "color": "#1b4332",
+      "bgcolor": "#2d6a4f"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        20,
+        100
+      ],
+      "size": [
+        380,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "localized_name": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1,
+            2
+          ]
+        },
+        {
+          "localized_name": "MASK",
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "title": "Input 2K Panorama Image",
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "example.png",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 3,
+      "type": "UpscaleModelLoader",
+      "pos": [
+        20,
+        520
+      ],
+      "size": [
+        380,
+        90
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "localized_name": "UPSCALE_MODEL",
+          "name": "UPSCALE_MODEL",
+          "type": "UPSCALE_MODEL",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "Load Upscale Model (RealESRGAN 2x)",
+      "properties": {
+        "Node name for S&R": "UpscaleModelLoader"
+      },
+      "widgets_values": [
+        "RealESRGAN_x2plus.pth"
+      ],
+      "widgets_values_named": {
+        "model_name": "RealESRGAN_x2plus.pth"
+      }
+    },
+    {
+      "id": 5,
+      "type": "PreviewImage",
+      "pos": [
+        440,
+        100
+      ],
+      "size": [
+        380,
+        220
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "title": "Original 2K Reference Preview",
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 4,
+      "type": "QwenPanoramaModelUpscale",
+      "pos": [
+        440,
+        380
+      ],
+      "size": [
+        380,
+        230
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "upscale_model",
+          "name": "upscale_model",
+          "type": "UPSCALE_MODEL",
+          "link": 3
+        },
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "image",
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            4,
+            5,
+            6
+          ]
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "localized_name": "info",
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "🔍 Qwen 360 Seamless Model Upscale (RealESRGAN 2x -> 4K)",
+      "properties": {
+        "Node name for S&R": "QwenPanoramaModelUpscale"
+      },
+      "widgets_values": [
+        true,
+        0.05,
+        "Full Frame (Best Quality)"
+      ],
+      "widgets_values_named": {
+        "seamless_boundary": true,
+        "wrap_percent": 0.05,
+        "processing_mode": "Full Frame (Best Quality)"
+      },
+      "color": "#1b4332",
+      "bgcolor": "#2d6a4f"
+    },
+    {
+      "id": 6,
+      "type": "QwenPanorama360Viewer",
+      "pos": [
+        860,
+        100
+      ],
+      "size": [
+        460,
+        460
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "🌐 Interactive 360° VR Viewer (4K Upscaled)",
+      "properties": {
+        "Node name for S&R": "QwenPanorama360Viewer"
+      },
+      "widgets_values": [
+        80,
+        false,
+        0.5,
+        ""
+      ],
+      "widgets_values_named": {
+        "default_fov": 80,
+        "auto_rotate": false,
+        "auto_rotate_speed": 0.5,
+        "panorama_viewer": ""
+      }
+    },
+    {
+      "id": 7,
+      "type": "PreviewImage",
+      "pos": [
+        1360,
+        100
+      ],
+      "size": [
+        540,
+        460
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        }
+      ],
+      "outputs": [],
+      "title": "Equirectangular 4K Flat Preview",
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 8,
+      "type": "QwenPanoramaExport",
+      "pos": [
+        860,
+        620
+      ],
+      "size": [
+        540,
+        240
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "saved_paths",
+          "name": "saved_paths",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "📦 Qwen 360 Panorama Export (4K Ultra VR)",
+      "properties": {
+        "Node name for S&R": "QwenPanoramaExport"
+      },
+      "widgets_values": [
+        "Qwen_4K_Panorama_Upscaled",
+        "PNG",
+        true,
+        false,
+        10,
+        30
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "Qwen_4K_Panorama_Upscaled",
+        "format": "PNG",
+        "inject_spherical_metadata": true,
+        "generate_spin_video": false,
+        "video_duration": 10,
+        "video_framerate": 30
+      }
+    }
+  ],
+  "links": [
+    [
+      1,
+      2,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "UPSCALE_MODEL"
+    ],
+    [
+      4,
+      4,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      4,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      4,
+      0,
+      8,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Step 1: Input Panorama & Model",
+      "bounding": [
+        0,
+        40,
+        415,
+        600
+      ],
+      "color": "#3f3f46"
+    },
+    {
+      "id": 2,
+      "title": "Step 2: 360 Seamless Neural Super-Resolution (2x -> 4K)",
+      "bounding": [
+        425,
+        40,
+        410,
+        600
+      ],
+      "color": "#1b4332"
+    },
+    {
+      "id": 3,
+      "title": "Step 3: 4K VR Preview, 360 Interactive Inspection & Export",
+      "bounding": [
+        845,
+        40,
+        1080,
+        840
+      ],
+      "color": "#1e3a8a"
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.85,
+      "offset": [
+        550,
+        50
+      ]
+    }
+  },
+  "version": 0.4
+}

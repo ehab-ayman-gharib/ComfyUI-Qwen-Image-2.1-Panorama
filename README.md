@@ -67,7 +67,8 @@ pip install -r ComfyUI-Qwen-Image-2.1-Panorama/requirements.txt
 | **Text Encoder** | `qwen3vl_8b_w4a8.safetensors` | 5.8 GB | `models/text_encoders/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
 | **VAE** | `qwen_image_2.1_vae_bf16.safetensors` | 496 MB | `models/vae/` | [Hugging Face](https://huggingface.co/Comfy-Org/Qwen-Image-2.1) |
 | **2× Upscaler** *(Optional)* | `RealESRGAN_x2plus.pth` | 64 MB | `models/upscale_models/` | [GitHub](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth) |
-| **4× Upscaler** *(Optional)* | `RealESRGAN_x4plus.pth` | 64 MB | `models/upscale_models/` | [GitHub](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth) |
+| **4× Upscaler (RealESRGAN)** *(Optional)* | `RealESRGAN_x4plus.pth` | 64 MB | `models/upscale_models/` | [GitHub](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth) |
+| **4× Upscaler (UltraSharp)** *(Recommended 8K)* | `4x-UltraSharp.pth` | 67 MB | `models/upscale_models/` | [Hugging Face](https://huggingface.co/lokcx/4x-Ultrasharp) |
 
 ---
 
@@ -81,8 +82,9 @@ All production-ready workflow JSON files are located in `workflows/` and can be 
 
 ### Standalone 360° Super-Resolution Workflows (Zero Boundary Seams)
 3. `Qwen_Image_2.1_4K_Panorama_Upscaler.json`: Production 2× neural super-resolution via `RealESRGAN_x2plus.pth` (2K $\to$ **4K Ultra VR** in ~2s with 5% toroidal boundary wrapping).
-4. `Qwen_Image_2.1_8K_Panorama_Upscaler.json`: Extreme 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP** in ~10s with 5% toroidal boundary wrapping).
-5. `Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`: Instant mathematical baseline upscaler (<0.05s, 0 GB VRAM) for direct side-by-side benchmarking against neural models.
+4. `Qwen_Image_2.1_8K_Panorama_UltraSharp_Upscaler.json`: Extreme 4× high-frequency photographic super-resolution via `4x-UltraSharp.pth` (2K $\to$ **8K Ultra VR / 33.5 MP** preserving crisp grass, leaves, and rock textures).
+5. `Qwen_Image_2.1_8K_Panorama_Upscaler.json`: Standard 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP** with built-in noise smoothing).
+6. `Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`: Instant mathematical baseline upscaler (<0.05s, 0 GB VRAM) for direct side-by-side benchmarking against neural models.
 
 Simply drag and drop any JSON file directly into your ComfyUI window!
 

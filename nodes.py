@@ -2,6 +2,7 @@ import os
 import torch
 import numpy as np
 from PIL import Image
+import cv2
 import folder_paths
 import subprocess
 import comfy.model_management
@@ -541,6 +542,22 @@ class QwenPanoramaModelUpscale:
                     "default": "Full Frame (Best Quality)",
                     "tooltip": "Processing mode. Full Frame processes the entire panorama at once without tile boundaries; Tiled saves VRAM on lower-end GPUs."
                 }),
+                "enable_bilateral_filter": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "Applies a subtle edge-preserving bilateral filter on the padded upscaled panorama before cropping padding, eliminating dotted noise and speckles without blurring sharp boundaries."
+                }),
+                "bilateral_d": ("INT", {
+                    "default": 5, "min": 1, "max": 15, "step": 1,
+                    "tooltip": "Diameter of pixel neighborhood (default: 5). Keep small for subtle cleanup."
+                }),
+                "bilateral_sigma_color": ("FLOAT", {
+                    "default": 15.0, "min": 1.0, "max": 50.0, "step": 1.0,
+                    "tooltip": "Filter sigma in color space (mild recommended: 10 to 20). Higher values smooth color variations."
+                }),
+                "bilateral_sigma_space": ("FLOAT", {
+                    "default": 4.0, "min": 1.0, "max": 20.0, "step": 0.5,
+                    "tooltip": "Filter sigma in coordinate space (mild recommended: 3 to 5)."
+                }),
             }
         }
 
@@ -556,7 +573,7 @@ class QwenPanoramaModelUpscale:
     CATEGORY = "QwenPanorama"
     DESCRIPTION = "Seamless 360° equirectangular model upscaler. Uses toroidal boundary wrapping to eliminate vertical stitch lines when upscaling with learned models (RealESRGAN_x2plus, 4x-UltraSharp)."
 
-    def upscale_seamless(self, upscale_model, image, seamless_boundary=True, wrap_percent=0.05, processing_mode="Full Frame (Best Quality)"):
+    def upscale_seamless(self, upscale_model, image, seamless_boundary=True, wrap_percent=0.05, processing_mode="Full Frame (Best Quality)", enable_bilateral_filter=False, bilateral_d=5, bilateral_sigma_color=15.0, bilateral_sigma_space=4.0):
         device = upscale_model.patcher.load_device
         B, H, W, C = image.shape
         scale = getattr(upscale_model, "scale", 2.0)
@@ -611,15 +628,37 @@ class QwenPanoramaModelUpscale:
                 if tile < 128:
                     raise e
 
-        # Step 3: Format & Crop
+        # Step 3: Format
         upscaled = torch.clamp(s.movedim(-3, -1), min=0.0, max=1.0).to(comfy.model_management.intermediate_dtype())
 
+        # Step 4: Bilateral Filter on padded image before cropping (if enabled)
+        if enable_bilateral_filter and bilateral_d > 0:
+            out_list = []
+            upscaled_cpu = upscaled.cpu()
+            for b in range(upscaled.shape[0]):
+                img_np = (upscaled_cpu[b].numpy() * 255.0).clip(0, 255).astype(np.uint8)
+                if img_np.shape[-1] == 4:
+                    rgb = img_np[:, :, :3]
+                    alpha = img_np[:, :, 3:]
+                    filtered_rgb = cv2.bilateralFilter(rgb, d=bilateral_d, sigmaColor=bilateral_sigma_color, sigmaSpace=bilateral_sigma_space)
+                    filtered = np.concatenate([filtered_rgb, alpha], axis=-1)
+                elif img_np.shape[-1] == 3:
+                    filtered = cv2.bilateralFilter(img_np, d=bilateral_d, sigmaColor=bilateral_sigma_color, sigmaSpace=bilateral_sigma_space)
+                else:
+                    filtered = cv2.bilateralFilter(img_np[:, :, 0], d=bilateral_d, sigmaColor=bilateral_sigma_color, sigmaSpace=bilateral_sigma_space)
+                    filtered = np.expand_dims(filtered, -1)
+                out_list.append(torch.from_numpy(filtered.astype(np.float32) / 255.0))
+            upscaled = torch.stack(out_list, dim=0).to(image.device)
+
+        # Step 5: Crop padding
         if pad_target > 0:
             cropped = upscaled[:, :, pad_target : pad_target + target_w, :]
         else:
             cropped = upscaled
 
         info_str = f"Seamless 360 {scale}x Upscaled: {W}x{H} -> {target_w}x{target_h} (RealESRGAN / Neural)"
+        if enable_bilateral_filter:
+            info_str += f" + Bilateral Filter (d={bilateral_d}, sigmaC={bilateral_sigma_color}, sigmaS={bilateral_sigma_space})"
         return (cropped, target_w, target_h, info_str)
 
 
@@ -756,6 +795,106 @@ class QwenPanoramaDownsample:
         out = cropped.clamp(0.0, 1.0)
         info_str = f"Seamless 360 Downsampled: {W}x{H} -> {target_w}x{target_h} ({downsample_method})"
         return (out, target_w, target_h, info_str)
+
+
+class QwenPanoramaBilateralFilter:
+    """
+    Subtle 360° Equirectangular Edge-Preserving Bilateral Cleanup Filter.
+    Removes high-frequency speckles, dotted artifacts, and neural upscaler noise while
+    strictly preserving crisp structural edges and architectural geometry.
+    Uses 5% toroidal boundary wrapping across 0°/360° to guarantee zero stitch lines.
+
+    Tuning Guidelines:
+      - Treat as a subtle cleanup, not a heavy denoise pass.
+      - Excessive filtering causes plasticky, waxy, or painterly smoothing.
+      - Mild baseline: d = 5, sigmaColor = 10 to 20, sigmaSpace = 3 to 5.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", {"tooltip": "Equirectangular 360° panorama image (e.g. 4K upscaled) to clean up."}),
+                "d": ("INT", {
+                    "default": 5, "min": 1, "max": 15, "step": 1,
+                    "tooltip": "Diameter of each pixel neighborhood (default: 5). Keep small for subtle cleanup."
+                }),
+                "sigma_color": ("FLOAT", {
+                    "default": 15.0, "min": 1.0, "max": 50.0, "step": 1.0,
+                    "tooltip": "Filter sigma in color space (mild recommended: 10 to 20). Controls how colors are mixed."
+                }),
+                "sigma_space": ("FLOAT", {
+                    "default": 4.0, "min": 1.0, "max": 20.0, "step": 0.5,
+                    "tooltip": "Filter sigma in coordinate space (mild recommended: 3 to 5). Controls spatial distance influence."
+                }),
+            },
+            "optional": {
+                "blend_opacity": ("FLOAT", {
+                    "default": 1.0, "min": 0.0, "max": 1.0, "step": 0.05,
+                    "tooltip": "Blend opacity between filtered and original image (1.0 = 100% filtered, 0.7 = subtle 70% cleanup)."
+                }),
+                "seamless_boundary": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Enables 5% toroidal boundary wrapping before filtering so the 0°/360° edge doesn't have kernel boundary seams."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("image", "info")
+    OUTPUT_TOOLTIPS = (
+        "Cleaned 360° panorama with dotted noise suppressed and sharp edges intact.",
+        "Summary information of the bilateral filter operation."
+    )
+    FUNCTION = "filter_seamless"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "Edge-preserving bilateral cleanup filter for 360° panoramas. Uses toroidal boundary wrapping to prevent vertical seam artifacts while gently eliminating ESRGAN dotted noise."
+
+    def filter_seamless(self, image, d, sigma_color, sigma_space, blend_opacity=1.0, seamless_boundary=True):
+        B, H, W, C = image.shape
+
+        if blend_opacity <= 0.0 or d <= 0:
+            return (image, f"Bypass: {W}x{H} (Opacity 0.0)")
+
+        # Toroidal boundary wrapping to prevent seam artifacts
+        if seamless_boundary:
+            pad_w = max(16, int(round(W * 0.05 / 32)) * 32)
+            left_pad = image[:, :, -pad_w:, :]
+            right_pad = image[:, :, :pad_w, :]
+            padded = torch.cat([left_pad, image, right_pad], dim=2)
+        else:
+            padded = image
+            pad_w = 0
+
+        out_list = []
+        padded_cpu = padded.cpu()
+        for b in range(padded.shape[0]):
+            img_np = (padded_cpu[b].numpy() * 255.0).clip(0, 255).astype(np.uint8)
+            if img_np.shape[-1] == 4:
+                rgb = img_np[:, :, :3]
+                alpha = img_np[:, :, 3:]
+                filtered_rgb = cv2.bilateralFilter(rgb, d=d, sigmaColor=sigma_color, sigmaSpace=sigma_space)
+                filtered = np.concatenate([filtered_rgb, alpha], axis=-1)
+            elif img_np.shape[-1] == 3:
+                filtered = cv2.bilateralFilter(img_np, d=d, sigmaColor=sigma_color, sigmaSpace=sigma_space)
+            else:
+                filtered = cv2.bilateralFilter(img_np[:, :, 0], d=d, sigmaColor=sigma_color, sigmaSpace=sigma_space)
+                filtered = np.expand_dims(filtered, -1)
+
+            out_list.append(torch.from_numpy(filtered.astype(np.float32) / 255.0))
+
+        result_padded = torch.stack(out_list, dim=0).to(image.device)
+
+        if pad_w > 0:
+            result = result_padded[:, :, pad_w : pad_w + W, :]
+        else:
+            result = result_padded
+
+        if blend_opacity < 1.0:
+            result = blend_opacity * result + (1.0 - blend_opacity) * image
+
+        out = result.clamp(0.0, 1.0)
+        info = f"Bilateral Filter (d={d}, sigmaColor={sigma_color}, sigmaSpace={sigma_space}, opacity={blend_opacity*100:.0f}%)"
+        return (out, info)
 
 
 

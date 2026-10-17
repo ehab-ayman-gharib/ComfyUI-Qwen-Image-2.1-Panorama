@@ -623,6 +623,143 @@ class QwenPanoramaModelUpscale:
         return (cropped, target_w, target_h, info_str)
 
 
+class QwenPanoramaDownsample:
+    """
+    High-Fidelity 360° Equirectangular Downsampler & Supersampling Anti-Aliasing Filter.
+    Takes high-resolution upscaled panoramas (e.g. 8K from 4x RealESRGAN) and smoothly
+    downsamples to 4K (4096x2048) or 2K (2048x1024) to eliminate high-frequency dotted noise,
+    speckle artifacts, and AI upscaler grain while preserving razor-sharp structural edges.
+    Features 3 selectable reconstruction filters:
+      - 'area': Box averaging filter (optimal for crushing dotted noise and single-pixel artifacts).
+      - 'bicubic': Antialiased bicubic filter (smooth, natural transitions).
+      - 'lanczos': 3-lobe windowed sinc filter (maximum micro-detail & line sharpness).
+    Applies toroidal boundary wrapping to prevent vertical stitch lines across 0°/360°.
+    """
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE", {"tooltip": "High-resolution 360° panorama image (e.g. 8K from 4x RealESRGAN) to downsample."}),
+                "downsample_method": ([
+                    "area",
+                    "bicubic",
+                    "lanczos"
+                ], {
+                    "default": "area",
+                    "tooltip": "Reconstruction algorithm: 'area' (box averaging, best for eliminating dotted/speckle artifacts), 'bicubic' (smooth antialiased bicubic), 'lanczos' (maximum crispness sinc filter)."
+                }),
+                "target_resolution": ([
+                    "4096x2048 (4K Ultra VR 2:1)",
+                    "2048x1024 (2K Production 2:1)",
+                    "1536x768 (Draft 2:1)",
+                    "Custom Scale",
+                    "Bypass / Original (No Downsample)"
+                ], {
+                    "default": "4096x2048 (4K Ultra VR 2:1)",
+                    "tooltip": "Target 2:1 equirectangular resolution (4096x2048 recommended for 8K->4K supersampling)."
+                }),
+            },
+            "optional": {
+                "custom_scale": ("FLOAT", {
+                    "default": 0.5, "min": 0.1, "max": 1.0, "step": 0.05,
+                    "tooltip": "Multiplier factor applied when 'Custom Scale' is selected (e.g. 0.5 downscales 8K to 4K)."
+                }),
+                "seamless_boundary": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Applies 5% toroidal boundary wrapping before filtering so left and right edges filter continuously, eliminating vertical seam artifacts."
+                }),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE", "INT", "INT", "STRING")
+    RETURN_NAMES = ("image", "width", "height", "info")
+    OUTPUT_TOOLTIPS = (
+        "Downsampled seamless equirectangular 360° panorama image.",
+        "Target width in pixels.",
+        "Target height in pixels.",
+        "Summary information of the downsampling operation."
+    )
+    FUNCTION = "downsample"
+    CATEGORY = "QwenPanorama"
+    DESCRIPTION = "360° Equirectangular downsampling node with 3 selectable filters ('area', 'bicubic', 'lanczos') and toroidal boundary wrapping. Ideal for supersampling 8K->4K to eliminate dotted artifacts."
+
+    def downsample(self, image, downsample_method, target_resolution, custom_scale=0.5, seamless_boundary=True):
+        B, H, W, C = image.shape
+        if target_resolution == "Bypass / Original (No Downsample)" or (target_resolution == "Custom Scale" and custom_scale == 1.0):
+            return (image, W, H, f"Original: {W}x{H} (Bypassed)")
+
+        if "4096x2048" in target_resolution:
+            target_w, target_h = 4096, 2048
+        elif "2048x1024" in target_resolution:
+            target_w, target_h = 2048, 1024
+        elif "1536x768" in target_resolution:
+            target_w, target_h = 1536, 768
+        else:
+            target_w = max(64, int(round(W * custom_scale / 64)) * 64)
+            target_h = max(32, int(round(H * custom_scale / 32)) * 32)
+
+        if target_w == W and target_h == H:
+            return (image, W, H, f"No change: {W}x{H}")
+
+        # Toroidal boundary wrapping to prevent vertical seam artifacts
+        if seamless_boundary:
+            pad_w = max(16, int(round(W * 0.05 / 32)) * 32)
+            pad_target = int(round(pad_w * (target_w / W)))
+            padded_target_w = target_w + 2 * pad_target
+            left_pad = image[:, :, -pad_w:, :]
+            right_pad = image[:, :, :pad_w, :]
+            padded = torch.cat([left_pad, image, right_pad], dim=2)
+        else:
+            padded = image
+            padded_target_w = target_w
+            pad_target = 0
+
+        if downsample_method == "lanczos":
+            out_list = []
+            padded_cpu = padded.cpu()
+            for b in range(padded.shape[0]):
+                img_slice = padded_cpu[b].numpy()
+                if img_slice.shape[-1] == 4:
+                    pil_mode = "RGBA"
+                elif img_slice.shape[-1] == 1:
+                    pil_mode = "L"
+                    img_slice = img_slice[:, :, 0]
+                else:
+                    pil_mode = "RGB"
+                    img_slice = img_slice[:, :, :3]
+                img_np = (img_slice * 255.0).clip(0, 255).astype(np.uint8)
+                pil_img = Image.fromarray(img_np, mode=pil_mode)
+                resized = pil_img.resize((padded_target_w, target_h), Image.Resampling.LANCZOS)
+                out_np = np.array(resized, dtype=np.float32) / 255.0
+                if len(out_np.shape) == 2:
+                    out_np = np.expand_dims(out_np, -1)
+                out_list.append(torch.from_numpy(out_np))
+            downsampled = torch.stack(out_list, dim=0).to(padded.device)
+        elif downsample_method == "bicubic":
+            x = padded.permute(0, 3, 1, 2)
+            interp = torch.nn.functional.interpolate(x, size=(target_h, padded_target_w), mode="bicubic", align_corners=False, antialias=True)
+            downsampled = interp.permute(0, 2, 3, 1)
+        elif downsample_method == "area":
+            x = padded.permute(0, 3, 1, 2)
+            interp = torch.nn.functional.interpolate(x, size=(target_h, padded_target_w), mode="area")
+            downsampled = interp.permute(0, 2, 3, 1)
+        else:
+            x = padded.permute(0, 3, 1, 2)
+            interp = torch.nn.functional.interpolate(x, size=(target_h, padded_target_w), mode="bilinear", align_corners=False, antialias=True)
+            downsampled = interp.permute(0, 2, 3, 1)
+
+        if pad_target > 0:
+            cropped = downsampled[:, :, pad_target : pad_target + target_w, :]
+        else:
+            cropped = downsampled
+
+        out = cropped.clamp(0.0, 1.0)
+        info_str = f"Seamless 360 Downsampled: {W}x{H} -> {target_w}x{target_h} ({downsample_method})"
+        return (out, target_w, target_h, info_str)
+
+
+
+
 class QwenPanoramaSeamExtract:
     """
     Step 1 of Surgical Seam Healing:

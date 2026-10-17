@@ -82,9 +82,10 @@ All production-ready workflow JSON files are located in `workflows/` and can be 
 
 ### Standalone 360° Super-Resolution Workflows (Zero Boundary Seams)
 3. `Qwen_Image_2.1_4K_Panorama_Upscaler.json`: Production 2× neural super-resolution via `RealESRGAN_x2plus.pth` (2K $\to$ **4K Ultra VR** in ~2s with 5% toroidal boundary wrapping).
-4. `Qwen_Image_2.1_8K_Panorama_UltraSharp_Upscaler.json`: Extreme 4× high-frequency photographic super-resolution via `4x-UltraSharp.pth` (2K $\to$ **8K Ultra VR / 33.5 MP** preserving crisp grass, leaves, and rock textures).
-5. `Qwen_Image_2.1_8K_Panorama_Upscaler.json`: Standard 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP** with built-in noise smoothing).
-6. `Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`: Instant mathematical baseline upscaler (<0.05s, 0 GB VRAM) for direct side-by-side benchmarking against neural models.
+4. `Qwen_Image_2.1_4K_Supersampled_Panorama_Upscaler.json`: **4K Supersampling Anti-Aliasing Workflow** ($2\text{K} \to 8\text{K} \text{ via RealESRGAN 4×} \to 4\text{K}$). Upscales to 8K to harvest deep structural edges, then immediately downsamples to 4K to **crush single-pixel dotted/noisy artifacts** using selectable `area`, `bicubic`, or `lanczos` filters.
+5. `Qwen_Image_2.1_8K_Panorama_UltraSharp_Upscaler.json`: Extreme 4× high-frequency photographic super-resolution via `4x-UltraSharp.pth` (2K $\to$ **8K Ultra VR / 33.5 MP** preserving crisp grass, leaves, and rock textures).
+6. `Qwen_Image_2.1_8K_Panorama_Upscaler.json`: Standard 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP** with built-in noise smoothing).
+7. `Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`: Instant mathematical baseline upscaler (<0.05s, 0 GB VRAM) for direct side-by-side benchmarking against neural models.
 
 Simply drag and drop any JSON file directly into your ComfyUI window!
 
@@ -108,6 +109,7 @@ All custom nodes are categorized under `QwenPanorama`:
 | **Qwen 360 Panorama Export** | `QwenPanorama` | Exports with Google Photo Sphere XMP metadata and optional rotating MP4 flythrough video. | `format`, `export_rotating_video`, `video_duration_seconds` |
 | **Qwen 360 Panorama Upscale (2K/4K)** | `QwenPanorama` | Seamless 2:1 upscaler with 5% toroidal boundary wrapping to prevent vertical seam artifacts. Upscales production 2K renders to **4K Ultra VR (`4096×2048`)** or draft renders to **2K (`2048×1024`)**. | `target_resolution` (2K / 4K / Custom), `seamless_boundary`, `upscale_method` |
 | **Qwen 360 Seamless Model Upscale (RealESRGAN)** | `QwenPanorama` | All-in-one neural super-resolution node (`RealESRGAN_x2plus`, `4x-UltraSharp`). Applies 5% toroidal margin wrapping, runs the model full-frame or tiled, and crops out padding for seamless 4K/8K spherical output. | `upscale_model`, `seamless_boundary`, `wrap_percent`, `processing_mode` |
+| **Qwen 360 Panorama Downsample (Supersample 4K)** | `QwenPanorama` | Dedicated 360° anti-aliasing reconstruction filter with 5% toroidal seam protection. Takes 8K neural upscaled panoramas and smoothly downsamples to **4K** or **2K**, crushing single-pixel dotted noise and grain while preserving sharp edges. | `downsample_method` (`area` [best for noise removal], `bicubic`, `lanczos`), `target_resolution`, `seamless_boundary` |
 | **Qwen 360 Panorama Seam Extract (Step 1)** | `QwenPanorama` | Rolls by 50% to place seam at center and crops narrow vertical strip for fast inpainting. | `image`, `crop_width` (default: 512px) |
 | **Qwen 360 Panorama Seam Restore (Step 2)** | `QwenPanorama` | Blends healed crop back using cosine feathered alpha masking and unrolls to original orientation. | `healed_crop`, `seam_context`, `feather_width` |
 | **Qwen 360 Panorama Horizontal Roll** | `QwenPanorama` | Horizontally shifts equirectangular image and synced mask along the cylindrical axis. | `mode` (Roll 50% / Unroll / Custom), `mask` |

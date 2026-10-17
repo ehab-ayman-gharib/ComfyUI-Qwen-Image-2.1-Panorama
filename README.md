@@ -6,10 +6,10 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
 
 <p align="center">
   <a href="docs/showcase_16x9.mp4">
-    <img src="docs/showcase.gif" alt="Qwen 360 Panorama Spatial Expansion Showcase" width="100%">
+    <img src="docs/showcase.gif" alt="Qwen 360 Panorama Showcase (I2I, T2I, and 4K Bilateral Super-Resolution)" width="100%">
   </a>
   <br>
-  <em>🌐 Spatial expansion demo (2D portrait seed input &rarr; seamless 360° VR world). <b>Click image to open full 1080p video</b>.</em>
+  <em>🌐 <b>Project Showcase</b>: 2D Photo-to-360° Spatial Expansion &amp; Pure Text-to-Panorama synthesis &rarr; 4K RealESRGAN + Bilateral Super-Resolution. <b>Click image to open full 1080p video</b>.</em>
 </p>
 
 ---

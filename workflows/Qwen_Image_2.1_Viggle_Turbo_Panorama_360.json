@@ -1466,7 +1466,14 @@
         "comparer_mode": "Slide",
         "Node name for S&R": "Image Comparer (rgthree)"
       },
-      "widgets_values": []
+      "widgets_values": [
+        []
+      ],
+      "widgets_values_named": {
+        "rgthree_comparer": {
+          "images": []
+        }
+      }
     }
   ],
   "links": [

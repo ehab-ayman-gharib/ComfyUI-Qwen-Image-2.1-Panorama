@@ -248,11 +248,11 @@
         "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "Gemini_Generated_Image_n0nhkn0nhkn0nhkn.png",
+        "example.png",
         "image"
       ],
       "widgets_values_named": {
-        "image": "Gemini_Generated_Image_n0nhkn0nhkn0nhkn.png",
+        "image": "example.png",
         "upload": "image"
       }
     },

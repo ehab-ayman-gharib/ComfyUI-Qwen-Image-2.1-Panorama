@@ -1,8 +1,8 @@
 {
-  "id": "7b2c5e81-91a3-4d64-8f43-1e5f8849b3c2",
+  "id": "8f3e1a74-b52c-49de-8b31-3c4a9108f910",
   "revision": 0,
   "last_node_id": 8,
-  "last_link_id": 5,
+  "last_link_id": 6,
   "nodes": [
     {
       "id": 1,
@@ -20,16 +20,16 @@
       "mode": 0,
       "inputs": [],
       "outputs": [],
-      "title": "🔍 Guide: 4K 360° Panorama Upscaler (RealESRGAN 2x + Seam Fix)",
+      "title": "🔍 Guide: 8K 360° Panorama Upscaler (RealESRGAN 4x + Seam Fix)",
       "properties": {},
       "widgets_values": [
-        "# 🌐 4K 360° Panorama Super-Resolution\n\nHigh-speed 2× neural upscaling for 360° equirectangular panoramas!\n\n### ⚙️ Pipeline Specifications\n• **Upscale Model**: `RealESRGAN_x2plus.pth` (Official 2× Super-Resolution model)\n• **Native Scaling ($2K \\to 4K$)**: Scales native $2048 \\times 1024$ input directly to pristine **$4096 \\times 2048$ (4K Ultra VR 2:1)** in ~2–3 seconds without downsampling blur.\n• **5% Toroidal Boundary Seam Wrap (`seamless_boundary: true`)**: Clones 5% opposite margins across edges during the neural model pass, ensuring the $0^\\circ / 360^\\circ$ wrap line is 100% seamless without vertical stitch lines.\n• **Processing Mode**: Full Frame (Best Quality) processes the entire sphere at once for unbroken global coherence.\n• **Interactive 360° VR Viewer**: Drag with the mouse to inspect any angle of the upscaled 4K world directly in ComfyUI.\n• **Metadata Export**: Injects standard Google Photo Sphere XMP metadata so output PNG/JPG automatically triggers 360° VR playback on VR headsets, Google, and Facebook.\n\n---\n\n### 🚀 Quick Start Instructions\n1. Drop any generated 2K panorama (from our generation workflow) into **[Input 2K Panorama Image]**.\n2. Ensure `RealESRGAN_x2plus.pth` is selected in **[Load Upscale Model]**.\n3. Click **Queue Prompt**: your 4K equirectangular panorama will be ready and displayed in the 360 viewer in seconds!"
+        "# 🌌 Extreme 8K 360° Panorama Super-Resolution\n\nCutting-edge 4× neural super-resolution for massive **33.5 Megapixel** 360° VR skyboxes!\n\n### ⚙️ Pipeline Specifications\n• **Upscale Model**: `RealESRGAN_x4plus.pth` (Official 4× Super-Resolution model)\n• **Extreme Scaling ($2K \\to 8K$)**: Scales native $2048 \\times 1024$ input directly to colossal **$8192 \\times 4096$ (8K Ultra VR 2:1)** in ~8–14 seconds.\n• **5% Toroidal Boundary Seam Wrap (`seamless_boundary: true`)**: Clones 5% opposite margins across edges during the neural model pass, ensuring the $0^\\circ / 360^\\circ$ wrap line is 100% seamless without vertical stitch lines.\n• **VRAM Management**: Defaulted to Full Frame with automatic progressive tiling fallback if VRAM is constrained.\n• **Interactive 360° VR Viewer**: Drag with the mouse to inspect microscopic texture details anywhere in the 8K world directly in ComfyUI.\n• **Metadata Export**: Injects standard Google Photo Sphere XMP metadata so output PNG/JPG automatically triggers 360° VR playback on VR headsets, Google, and Facebook.\n\n---\n\n### 🚀 Quick Start Instructions\n1. Drop any generated 2K panorama (from our generation workflow) into **[Input 2K Panorama Image]**.\n2. Ensure `RealESRGAN_x4plus.pth` is selected in **[Load Upscale Model]**.\n3. Click **Queue Prompt**: your 8K ($8192 \\times 4096$) equirectangular panorama will be ready in seconds!"
       ],
       "widgets_values_named": {
-        "text": "# 🌐 4K 360° Panorama Super-Resolution\n\nHigh-speed 2× neural upscaling for 360° equirectangular panoramas!\n\n• **Model**: `RealESRGAN_x2plus.pth`\n• **Resolution**: 2048x1024 (2K) -> 4096x2048 (4K)\n• **Seamless Seam Fix**: 5% toroidal boundary wrapping eliminates stitch lines."
+        "text": "# 🌌 Extreme 8K 360° Panorama Super-Resolution\n\nCutting-edge 4× neural super-resolution for massive 33.5 Megapixel 360° VR skyboxes!\n\n• **Model**: `RealESRGAN_x4plus.pth`\n• **Resolution**: 2048x1024 (2K) -> 8192x4096 (8K)\n• **Seamless Seam Fix**: 5% toroidal boundary wrapping eliminates stitch lines."
       },
-      "color": "#1b4332",
-      "bgcolor": "#2d6a4f"
+      "color": "#3f1d38",
+      "bgcolor": "#2b1227"
     },
     {
       "id": 2,
@@ -101,15 +101,15 @@
           ]
         }
       ],
-      "title": "Load Upscale Model (RealESRGAN 2x)",
+      "title": "Load Upscale Model (RealESRGAN 4x)",
       "properties": {
         "Node name for S&R": "UpscaleModelLoader"
       },
       "widgets_values": [
-        "RealESRGAN_x2plus.pth"
+        "RealESRGAN_x4plus.pth"
       ],
       "widgets_values_named": {
-        "model_name": "RealESRGAN_x2plus.pth"
+        "model_name": "RealESRGAN_x4plus.pth"
       }
     },
     {
@@ -198,7 +198,7 @@
           "links": null
         }
       ],
-      "title": "🔍 Qwen 360 Seamless Model Upscale (RealESRGAN 2x -> 4K)",
+      "title": "🔍 Qwen 360 Seamless Model Upscale (RealESRGAN 4x -> 8K)",
       "properties": {
         "Node name for S&R": "QwenPanoramaModelUpscale"
       },
@@ -212,8 +212,8 @@
         "wrap_percent": 0.05,
         "processing_mode": "Full Frame (Best Quality)"
       },
-      "color": "#1b4332",
-      "bgcolor": "#2d6a4f"
+      "color": "#3f1d38",
+      "bgcolor": "#2b1227"
     },
     {
       "id": 6,
@@ -245,7 +245,7 @@
           "links": null
         }
       ],
-      "title": "🌐 Interactive 360° VR Viewer (4K Upscaled)",
+      "title": "🌐 Interactive 360° VR Viewer (8K Upscaled)",
       "properties": {
         "Node name for S&R": "QwenPanorama360Viewer"
       },
@@ -285,7 +285,7 @@
         }
       ],
       "outputs": [],
-      "title": "Equirectangular 4K Flat Preview",
+      "title": "Equirectangular 8K Flat Preview",
       "properties": {
         "Node name for S&R": "PreviewImage"
       }
@@ -320,25 +320,23 @@
           "links": null
         }
       ],
-      "title": "📦 Qwen 360 Panorama Export (4K Ultra VR)",
+      "title": "📦 Qwen 360 Panorama Export (8K Ultra VR)",
       "properties": {
         "Node name for S&R": "QwenPanoramaExport"
       },
       "widgets_values": [
-        "Qwen_4K_Panorama_Upscaled",
-        "PNG",
-        true,
+        "Qwen_8K_Panorama_Upscaler",
+        "png",
         false,
         10,
         30
       ],
       "widgets_values_named": {
-        "filename_prefix": "Qwen_4K_Panorama_Upscaled",
-        "format": "PNG",
-        "inject_spherical_metadata": true,
-        "generate_spin_video": false,
-        "video_duration": 10,
-        "video_framerate": 30
+        "filename_prefix": "Qwen_8K_Panorama_Upscaler",
+        "format": "png",
+        "export_rotating_video": false,
+        "video_duration_seconds": 10,
+        "video_fps": 30
       }
     }
   ],
@@ -406,18 +404,18 @@
     },
     {
       "id": 2,
-      "title": "Step 2: 360 Seamless Neural Super-Resolution (2x -> 4K)",
+      "title": "Step 2: 360 Seamless Neural Super-Resolution (4x -> 8K)",
       "bounding": [
         425,
         40,
         410,
         600
       ],
-      "color": "#1b4332"
+      "color": "#3f1d38"
     },
     {
       "id": 3,
-      "title": "Step 3: 4K VR Preview, 360 Interactive Inspection & Export",
+      "title": "Step 3: 8K VR Preview, 360 Interactive Inspection & Export",
       "bounding": [
         845,
         40,

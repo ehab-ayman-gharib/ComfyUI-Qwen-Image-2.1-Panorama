@@ -76,17 +76,33 @@ pip install -r ComfyUI-Qwen-Image-2.1-Panorama/requirements.txt
 
 All production-ready workflow JSON files are located in `workflows/` and can be loaded directly in ComfyUI:
 
-### Generation Workflows (Image-to-Pano & Text-to-Pano)
-1. `Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`: 9-step dual-LoRA stack (Pano360 LoRA + Viggle Turbo v0.3) for ultra-fast drafts (~20s generation on 8GB VRAM).
-2. `Qwen_Image_2.1_Full_Quality_Panorama_360.json`: 25-step production 2K render (`2048×1024`) driven by the Pano360 LoRA and native Euler sampler for pristine spherical skyboxes.
+### 🌟 Primary Generation Workflows (End-to-End 2K Generation &rarr; 4K Bilateral Upscale)
+Both main workflows now feature our **winning 4K super-resolution pipeline** built directly into the flow: **Generation &rarr; 5% Toroidal Wrap &rarr; RealESRGAN 2× &rarr; Subtle Bilateral Filter &rarr; Crop &rarr; Final 4K**:
+1. **`Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`** *(Recommended for Fast Production)*:
+   - 9-step dual-LoRA stack (Pano360 LoRA + Viggle Turbo v0.3) + custom refined sigmas.
+   - Generates a 2K equirectangular world and seamlessly upscales to **4K Ultra VR (`4096×2048`)** with gentle bilateral noise suppression in **~22s total** on 8GB VRAM.
+2. **`Qwen_Image_2.1_Full_Quality_Panorama_360.json`** *(Maximum Architectural Precision)*:
+   - 25-step native Euler sampler with Pano360 LoRA.
+   - Deep structural geometry and texture details, upscaled and cleaned to **4K Ultra VR (`4096×2048`)** in < 2 minutes.
 
-### Standalone 360° Super-Resolution Workflows (Zero Boundary Seams)
-3. `Qwen_Image_2.1_4K_Panorama_Bilateral_Upscaler.json`: **4K Bilateral Cleanup Upscaler** (`2K Pano` $\to$ `5% Wrap` $\to$ `RealESRGAN 2×` $\to$ `Bilateral Filter` $\to$ `Crop` $\to$ `Final 4K`). Applies a subtle edge-preserving bilateral filter (`d=5`, `sigma_color=15`, `sigma_space=4`) with toroidal margin wrapping to gently clean up neural speckles and dotted noise while strictly keeping sharp architectural lines and horizons.
-4. `Qwen_Image_2.1_4K_Panorama_Upscaler.json`: Production 2× neural super-resolution via `RealESRGAN_x2plus.pth` (2K $\to$ **4K Ultra VR** in ~2s with 5% toroidal boundary wrapping).
-5. `Qwen_Image_2.1_4K_Supersampled_Panorama_Upscaler.json`: **4K Supersampling Anti-Aliasing Workflow** ($2\text{K} \to 8\text{K} \text{ via RealESRGAN 4×} \to 4\text{K}$). Upscales to 8K to harvest deep structural edges, then immediately downsamples to 4K to crush single-pixel dotted/noisy artifacts using selectable `area`, `bicubic`, or `lanczos` filters.
-6. `Qwen_Image_2.1_8K_Panorama_UltraSharp_Upscaler.json`: Extreme 4× high-frequency photographic super-resolution via `4x-UltraSharp.pth` (2K $\to$ **8K Ultra VR / 33.5 MP** preserving crisp grass, leaves, and rock textures).
-7. `Qwen_Image_2.1_8K_Panorama_Upscaler.json`: Standard 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP** with built-in noise smoothing).
-8. `Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`: Instant mathematical baseline upscaler (<0.05s, 0 GB VRAM) for direct side-by-side benchmarking against neural models.
+---
+
+### 🔬 Standalone & Experimental Upscalers (in `workflows/Upscaling/`)
+For upscaling existing panoramas, A/B benchmarking, or experimenting with extreme 8K resolutions:
+1. **`Qwen_Image_2.1_4K_Panorama_Bilateral_Upscaler.json`** *(⭐ Best Overall Result)*:
+   - Standalone RealESRGAN 2× + 360-aware Bilateral Filter with side-by-side A/B preview windows.
+   - Eliminates neural speckles and dotted noise while keeping sharp architectural edges, horizons, and silhouettes 100% crisp.
+2. **`Qwen_Image_2.1_4K_Supersampled_Panorama_Upscaler.json`**:
+   - 4K Supersampling Anti-Aliasing pipeline ($2\text{K} \to 8\text{K} \text{ via RealESRGAN 4×} \to 4\text{K}$).
+   - Downsamples using selectable `area` (box averaging), `bicubic`, or `lanczos` filters.
+3. **`Qwen_Image_2.1_8K_Panorama_UltraSharp_Upscaler.json`**:
+   - Extreme 4× high-frequency photographic super-resolution via `4x-UltraSharp.pth` (2K $\to$ **8K Ultra VR / 33.5 MP**).
+4. **`Qwen_Image_2.1_8K_Panorama_Upscaler.json`**:
+   - Standard 4× neural super-resolution via `RealESRGAN_x4plus.pth` (2K $\to$ **8K Cinema VR / 33.5 MP**).
+5. **`Qwen_Image_2.1_4K_Panorama_Upscaler.json`**:
+   - Standard 2× neural super-resolution without post-filtering.
+6. **`Qwen_Image_2.1_4K_Panorama_Bicubic_Upscaler.json`**:
+   - Zero-latency (<0.05s, 0 GB VRAM) mathematical baseline upscaler for direct benchmarking.
 
 Simply drag and drop any JSON file directly into your ComfyUI window!
 

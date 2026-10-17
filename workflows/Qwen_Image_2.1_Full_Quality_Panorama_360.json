@@ -1,7 +1,7 @@
 {
   "id": "ea489017-8348-485d-bda9-0eb9707384b0",
   "revision": 0,
-  "last_node_id": 20,
+  "last_node_id": 22,
   "last_link_id": 33,
   "nodes": [
     {
@@ -20,13 +20,13 @@
       "mode": 0,
       "inputs": [],
       "outputs": [],
-      "title": "\ud83d\udc8e Guide: Full-Quality 25-Step 360\u00b0 VR Panorama (2K)",
+      "title": "💎 Guide: Full-Quality 25-Step 360° VR Panorama (2K)",
       "properties": {},
       "widgets_values": [
-        "# \ud83c\udf10 Qwen-Image-2.1 \u2022 Full-Quality 360\u00b0 VR Panorama (2K)\n\nProduction high-fidelity spherical skybox & VR environment!\n\n### \u2699\ufe0f Pipeline Specifications\n\u2022 **Base Model**: qwen_image_2.1_Q5_K_M.gguf (Qwen-Image 2.1 DiT Backbone)\n\u2022 **360 Panorama LoRA**: pano360_qwen21_edit_v1.safetensors (Gogodr / Poly Haven, Strength 1.0) \u2014 *Essential spherical LoRA mapping scenes into seamless 360\u00b0 equirectangular panoramas!*\n\u2022 **QwenImage21Cache**: Prefix attention caching accelerates 25-step inference to ~60-80s on 8GB GPU!\n\u2022 **Latent**: Dedicated Qwen 360 Panorama Latent (2:1) preset to **2048\u00d71024 (2K VR Production)** for pristine native spherical resolution directly in latent space.\n\u2022 **Sampler**: Native euler / simple at **25 steps**.\n\u2022 **CFG Guidance**: Default 1.0 (fast single-pass). You can increase to 2.0 - 3.0 to strongly amplify prompt adherence.\n\u2022 **Seamless Upscale**: Qwen 360 Panorama Upscale with toroidal boundary wrapping to boost 2K up to **4K Ultra VR (4096\u00d72048)**.\n\u2022 **Interactive 360 Viewer**: Drag to look around in 360\u00b0, scroll to zoom FOV, or toggle auto-rotation.\n\n---\n\n### \ud83d\udd00 Dual Modality: Image-to-Pano vs. Text-to-Pano\nThis workflow supports **BOTH** Image-to-Panorama and pure Text-to-Panorama generation:\n\n\u2022 **\ud83d\uddbc\ufe0f Image-to-Panorama (Default)**:\n  - Load your 2D photo into **[Load Reference Photo]**. It anchors at the center (\u00b0$ yaw) while the AI synthesizes the surrounding 360\u00b0 world.\n\n\u2022 **\u270d\ufe0f Pure Text-to-Panorama (Text Only)**:\n  1. Select **[Load Reference Photo]** and press **Ctrl + M** to **Bypass / Mute** it (or disconnect the wire leading into Text Encode Qwen Image 2.1).\n  2. In **[Qwen 360 Panorama Prompt]**, describe your complete 360\u00b0 scene environment.\n  3. Click **Queue Prompt**: Qwen synthesizes a pristine 360\u00b0 VR world from scratch purely from your text prompt!"
+        "# 💎 Qwen 360 Full Quality Panorama Studio (4K Bilateral Pipeline)\n\nPristine 25-step production generation + **4K RealESRGAN 2×** + **Subtle Bilateral Cleanup**.\n\n### 🔄 Full Pipeline\n1. **Text/Image Conditioning**: Pano360 LoRA spherical backbone.\n2. **25-step Euler Sampling**: High-precision denoising for crisp architectural & landscape geometry.\n3. **4K Toroidal Upscale**: RealESRGAN 2× with 5% boundary wrap.\n4. **Subtle Bilateral Filter**: Mild d=5, sigmaColor=15 edge-preserving noise cleanup.\n5. **VR 360 Viewer & Export**: Interactive WebGL sphere viewer + Photo Sphere XMP metadata."
       ],
       "widgets_values_named": {
-        "text": "# \ud83c\udf10 Qwen-Image-2.1 \u2022 Full-Quality 360\u00b0 VR Panorama\n\nProduction high-fidelity spherical skybox & VR environment!\n\n\u2022 **Model**: `qwen_image_2.1_Q5_K_M.gguf` (Zero LoRAs \u2014 pure native base DiT math)\n\u2022 **QwenImage21Cache**: Prefix attention caching accelerates 25-step inference to ~60-80s on 8GB GPU!\n\u2022 **Sampler**: Native `euler` / `simple` at **25 steps**\n\u2022 **CFG Guidance Knob**: Default `1.0` (fast single-pass). You can increase to `2.0 - 3.0` to strongly amplify prompt adherence.\n\u2022 **Resolution**: Choose `1536x768` (2:1) or `1568x672` (21:9 Ultrawide), followed by instant upscale to 2K.\n\u2022 **Interactive 360 Viewer**: Drag to look around in 360\u00b0, scroll to zoom FOV, or toggle auto-rotation."
+        "text": "# 🌐 Qwen-Image-2.1 • Full-Quality 360° VR Panorama\n\nProduction high-fidelity spherical skybox & VR environment!\n\n• **Model**: `qwen_image_2.1_Q5_K_M.gguf` (Zero LoRAs — pure native base DiT math)\n• **QwenImage21Cache**: Prefix attention caching accelerates 25-step inference to ~60-80s on 8GB GPU!\n• **Sampler**: Native `euler` / `simple` at **25 steps**\n• **CFG Guidance Knob**: Default `1.0` (fast single-pass). You can increase to `2.0 - 3.0` to strongly amplify prompt adherence.\n• **Resolution**: Choose `1536x768` (2:1) or `1568x672` (21:9 Ultrawide), followed by instant upscale to 2K.\n• **Interactive 360 Viewer**: Drag to look around in 360°, scroll to zoom FOV, or toggle auto-rotation."
       },
       "color": "#322",
       "bgcolor": "#533"
@@ -650,12 +650,12 @@
       "id": 16,
       "type": "QwenPanorama360Viewer",
       "pos": [
-        1980,
+        2880,
         100
       ],
       "size": [
-        460,
-        460
+        480,
+        480
       ],
       "flags": {},
       "order": 16,
@@ -676,7 +676,7 @@
           ]
         }
       ],
-      "title": "\ud83c\udf10 Interactive 360\u00b0 VR Viewer",
+      "title": "🌐 Interactive 360° VR Viewer",
       "properties": {
         "Node name for S&R": "QwenPanorama360Viewer"
       },
@@ -693,12 +693,12 @@
       "id": 10,
       "type": "PreviewImage",
       "pos": [
-        2480,
+        3400,
         100
       ],
       "size": [
-        580,
-        500
+        540,
+        480
       ],
       "flags": {},
       "order": 15,
@@ -728,12 +728,12 @@
       "id": 15,
       "type": "QwenPanoramaExport",
       "pos": [
-        2480,
+        2880,
         650
       ],
       "size": [
-        580,
-        220
+        540,
+        240
       ],
       "flags": {},
       "order": 17,
@@ -792,130 +792,96 @@
           "links": null
         }
       ],
-      "title": "Export 360\u00b0 Panorama (VR XMP / Video)",
+      "title": "Export 360° Panorama (VR XMP / Video)",
       "properties": {
         "Node name for S&R": "QwenPanoramaExport"
       },
       "widgets_values": [
-        "Qwen_Pano_2K",
-        "jpg_vr360",
+        "Qwen_Pano_Full_4K",
+        "png",
         false,
-        10.0,
+        10,
         30
       ],
       "widgets_values_named": {
-        "filename_prefix": "Qwen_Orbit_Turntable",
-        "fps": 2.5,
-        "export_mp4": true,
-        "export_webp": true,
-        "export_frames": true,
-        "mp4_background": "dark",
-        "loop_count": 2
+        "filename_prefix": "Qwen_Pano_Full_4K",
+        "format": "png",
+        "export_rotating_video": false,
+        "video_duration_seconds": 10,
+        "video_fps": 30
       }
     },
     {
       "id": 18,
-      "type": "QwenPanoramaUpscale",
+      "type": "QwenPanoramaModelUpscale",
       "pos": [
-        1510,
+        1980,
         680
       ],
       "size": [
-        380,
-        200
+        400,
+        260
       ],
       "flags": {},
       "order": 15,
       "mode": 0,
       "inputs": [
         {
-          "localized_name": "image",
+          "name": "upscale_model",
+          "type": "UPSCALE_MODEL",
+          "link": 25
+        },
+        {
           "name": "image",
           "type": "IMAGE",
           "link": 21
-        },
-        {
-          "localized_name": "target_resolution",
-          "name": "target_resolution",
-          "type": "COMBO",
-          "widget": {
-            "name": "target_resolution"
-          },
-          "link": null
-        },
-        {
-          "localized_name": "upscale_method",
-          "name": "upscale_method",
-          "type": "COMBO",
-          "widget": {
-            "name": "upscale_method"
-          },
-          "link": null
-        },
-        {
-          "localized_name": "custom_scale",
-          "name": "custom_scale",
-          "type": "FLOAT",
-          "widget": {
-            "name": "custom_scale"
-          },
-          "link": null
-        },
-        {
-          "localized_name": "seamless_boundary",
-          "name": "seamless_boundary",
-          "type": "BOOLEAN",
-          "widget": {
-            "name": "seamless_boundary"
-          },
-          "link": null
         }
       ],
       "outputs": [
         {
-          "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
           "links": [
-            22,
-            23,
-            24
+            26
           ]
         },
         {
-          "localized_name": "width",
           "name": "width",
           "type": "INT",
           "links": null
         },
         {
-          "localized_name": "height",
           "name": "height",
           "type": "INT",
           "links": null
         },
         {
-          "localized_name": "info",
           "name": "info",
           "type": "STRING",
           "links": null
         }
       ],
-      "title": "\ud83d\udd0d Qwen 360 Panorama Upscale (2K/4K) [Bypassable]",
+      "title": "🔍 4K Seamless Neural Upscale (RealESRGAN 2x)",
       "properties": {
         "Node name for S&R": "QwenPanoramaUpscale"
       },
       "widgets_values": [
-        "2048x1024 (2K Production 2:1)",
-        "bicubic",
-        1.333,
-        true
+        true,
+        0.05,
+        "Full Frame (Best Quality)",
+        false,
+        5,
+        15.0,
+        4.0
       ],
       "widgets_values_named": {
-        "target_resolution": "2048x1024 (2K Production 2:1)",
-        "upscale_method": "bicubic",
-        "custom_scale": 1.333,
-        "seamless_boundary": true
+        "seamless_boundary": true,
+        "wrap_percent": 0.05,
+        "processing_mode": "Full Frame (Best Quality)",
+        "enable_bilateral_filter": false,
+        "bilateral_d": 5,
+        "bilateral_sigma_color": 15.0,
+        "bilateral_sigma_space": 4.0
       },
       "color": "#1b4332",
       "bgcolor": "#2d6a4f"
@@ -1098,6 +1064,99 @@
         "lora_name": "pano360_qwen21_edit_v1.safetensors",
         "strength_model": 1.0
       }
+    },
+    {
+      "id": 21,
+      "type": "UpscaleModelLoader",
+      "pos": [
+        1510,
+        680
+      ],
+      "size": [
+        400,
+        90
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "UPSCALE_MODEL",
+          "type": "UPSCALE_MODEL",
+          "links": [
+            25
+          ]
+        }
+      ],
+      "title": "Load Upscale Model (RealESRGAN 2x)",
+      "properties": {
+        "Node name for S&R": "UpscaleModelLoader"
+      },
+      "widgets_values": [
+        "RealESRGAN_x2plus.pth"
+      ],
+      "widgets_values_named": {
+        "model_name": "RealESRGAN_x2plus.pth"
+      }
+    },
+    {
+      "id": 22,
+      "type": "QwenPanoramaBilateralFilter",
+      "pos": [
+        2420,
+        680
+      ],
+      "size": [
+        420,
+        260
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            22,
+            23,
+            24
+          ]
+        },
+        {
+          "name": "info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "✨ 4K Subtle Bilateral Filter (Noise Cleanup)",
+      "properties": {
+        "Node name for S&R": "QwenPanoramaBilateralFilter"
+      },
+      "widgets_values": [
+        5,
+        15.0,
+        4.0,
+        1.0,
+        true
+      ],
+      "widgets_values_named": {
+        "d": 5,
+        "sigma_color": 15.0,
+        "sigma_space": 4.0,
+        "blend_opacity": 1.0,
+        "seamless_boundary": true
+      },
+      "color": "#1f3a32",
+      "bgcolor": "#122620"
     }
   ],
   "links": [
@@ -1183,7 +1242,7 @@
     ],
     [
       22,
-      18,
+      22,
       0,
       16,
       0,
@@ -1191,7 +1250,7 @@
     ],
     [
       23,
-      18,
+      22,
       0,
       10,
       0,
@@ -1199,7 +1258,7 @@
     ],
     [
       24,
-      18,
+      22,
       0,
       15,
       0,
@@ -1228,11 +1287,27 @@
       8,
       0,
       "MODEL"
+    ],
+    [
+      25,
+      21,
+      0,
+      18,
+      0,
+      "UPSCALE_MODEL"
+    ],
+    [
+      26,
+      18,
+      0,
+      22,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [
     {
-      "title": "\ud83d\udcd6 Complete User Guide & Pipeline Instructions",
+      "title": "📖 Complete User Guide & Pipeline Instructions",
       "bounding": [
         -610,
         40,
@@ -1287,7 +1362,7 @@
       "font_size": 24
     },
     {
-      "title": "5. Seamless 360\u00b0 VR Viewer, Preview & Export",
+      "title": "5. Seamless 360° VR Viewer, Preview & Export",
       "bounding": [
         1950,
         40,

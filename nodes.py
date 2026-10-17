@@ -258,9 +258,9 @@ class QwenPanoramaExport:
                     "default": "Qwen_Panorama_360",
                     "tooltip": "Prefix for exported image and video filenames (saved in ComfyUI/output/Panoramas/)."
                 }),
-                "format": (["png", "webp", "jpg_vr360"], {
-                    "default": "jpg_vr360",
-                    "tooltip": "Export file format. 'jpg_vr360' injects standard Google Photo Sphere GPano XMP metadata for instant VR playback."
+                "format": (["png", "jpg_vr360", "webp"], {
+                    "default": "png",
+                    "tooltip": "Export file format (PNG or JPEG with Google Photo Sphere GPano 360 metadata)."
                 }),
             },
             "optional": {
@@ -268,8 +268,8 @@ class QwenPanoramaExport:
                     "default": False,
                     "tooltip": "When enabled, renders a smooth 360-degree rotating flythrough MP4 video alongside the image using FFmpeg."
                 }),
-                "video_duration_seconds": ("FLOAT", {
-                    "default": 10.0, "min": 4.0, "max": 30.0, "step": 1.0,
+                "video_duration_seconds": ("INT", {
+                    "default": 10, "min": 3, "max": 60, "step": 1,
                     "tooltip": "Duration of the rotating flythrough MP4 video in seconds."
                 }),
                 "video_fps": ("INT", {
@@ -287,7 +287,7 @@ class QwenPanoramaExport:
     CATEGORY = "QwenPanorama"
     DESCRIPTION = "Exports 360° equirectangular panoramas with embedded Google Photo Sphere (GPano) XMP metadata for VR platforms, with optional rotating MP4 video flythrough."
 
-    def export_panorama(self, images, filename_prefix, format="jpg_vr360", export_rotating_video=False, video_duration_seconds=10.0, video_fps=30):
+    def export_panorama(self, images, filename_prefix, format="png", export_rotating_video=False, video_duration_seconds=10, video_fps=30):
         output_dir = folder_paths.get_output_directory()
         pano_dir = os.path.join(output_dir, "Panoramas")
         os.makedirs(pano_dir, exist_ok=True)
@@ -310,12 +310,9 @@ class QwenPanoramaExport:
             out_path = os.path.join(pano_dir, out_filename)
 
             if format == "jpg_vr360":
-                # Ensure RGB for JPEG
                 if img.mode != "RGB":
                     img = img.convert("RGB")
-                # Save JPEG with high quality
                 img.save(out_path, format="JPEG", quality=95)
-                # Inject XMP GPano metadata for auto-360 detection
                 try:
                     self._inject_vr360_xmp(out_path, img.width, img.height)
                 except Exception as e:
@@ -323,7 +320,13 @@ class QwenPanoramaExport:
             elif format == "webp":
                 img.save(out_path, format="WEBP", quality=92)
             else:
-                img.save(out_path, format="PNG")
+                try:
+                    from PIL import PngImagePlugin
+                    pnginfo = PngImagePlugin.PngInfo()
+                    pnginfo.add_text("XML:com.adobe.xmp", self._get_xmp_xml(img.width, img.height))
+                    img.save(out_path, format="PNG", pnginfo=pnginfo)
+                except Exception:
+                    img.save(out_path, format="PNG")
 
             saved_paths.append(out_path)
 
@@ -336,12 +339,8 @@ class QwenPanoramaExport:
 
         return {"ui": {"exported_files": saved_paths}, "result": (", ".join(saved_paths),)}
 
-    def _inject_vr360_xmp(self, jpeg_path, width, height):
-        """
-        Injects standard Google Photo Sphere XMP metadata directly into JPEG APP1 block.
-        Allows immediate 360 panorama detection in Facebook, VR headsets, and 360 viewers.
-        """
-        xmp_template = f"""http://ns.adobe.com/xap/1.0/\x00<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+    def _get_xmp_xml(self, width, height):
+        return f"""<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
   <rdf:Description rdf:about="" xmlns:GPano="http://ns.google.com/photos/1.0/panorama/">
@@ -359,10 +358,11 @@ class QwenPanoramaExport:
 </x:xmpmeta>
 <?xpacket end="w"?>"""
 
+    def _inject_vr360_xmp(self, jpeg_path, width, height):
+        xmp_template = f"http://ns.adobe.com/xap/1.0/\x00{self._get_xmp_xml(width, height)}"
         with open(jpeg_path, "rb") as f:
             data = f.read()
 
-        # JPEG starts with SOI (0xFFD8)
         if data[:2] != b'\xff\xd8':
             return
 

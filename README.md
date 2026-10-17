@@ -81,9 +81,11 @@ Both main workflows now feature our **winning 4K super-resolution pipeline** bui
 1. **`Qwen_Image_2.1_Viggle_Turbo_Panorama_360.json`** *(Recommended for Fast Production)*:
    - 9-step dual-LoRA stack (Pano360 LoRA + Viggle Turbo v0.3) + custom refined sigmas.
    - Generates a 2K equirectangular world and seamlessly upscales to **4K Ultra VR (`4096×2048`)** with gentle bilateral noise suppression in **~22s total** on 8GB VRAM.
+   - Includes interactive **Image Comparer (rgthree)** hover slider to dynamically compare the raw 2K render vs. the final cleaned 4K panorama in real time.
 2. **`Qwen_Image_2.1_Full_Quality_Panorama_360.json`** *(Maximum Architectural Precision)*:
    - 25-step native Euler sampler with Pano360 LoRA.
    - Deep structural geometry and texture details, upscaled and cleaned to **4K Ultra VR (`4096×2048`)** in < 2 minutes.
+   - Includes interactive **Image Comparer (rgthree)** hover slider to dynamically compare the raw 2K render vs. the final cleaned 4K panorama in real time.
 
 ---
 

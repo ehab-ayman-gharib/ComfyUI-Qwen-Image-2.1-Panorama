@@ -1,8 +1,8 @@
 {
   "id": "2ca89008-a706-40fa-a330-6a49ff6d9b49",
   "revision": 0,
-  "last_node_id": 23,
-  "last_link_id": 23,
+  "last_node_id": 24,
+  "last_link_id": 25,
   "nodes": [
     {
       "id": 1,
@@ -1046,7 +1046,8 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            18
+            18,
+            24
           ]
         }
       ],
@@ -1402,7 +1403,8 @@
           "links": [
             19,
             20,
-            21
+            21,
+            25
           ]
         },
         {
@@ -1431,6 +1433,40 @@
       },
       "color": "#1f3a32",
       "bgcolor": "#122620"
+    },
+    {
+      "id": 24,
+      "type": "Image Comparer (rgthree)",
+      "pos": [
+        3500,
+        640
+      ],
+      "size": [
+        640,
+        460
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_a",
+          "type": "IMAGE",
+          "link": 24
+        },
+        {
+          "name": "image_b",
+          "type": "IMAGE",
+          "link": 25
+        }
+      ],
+      "outputs": [],
+      "title": "⚖️ Compare 2K vs 4K Cleaned (rgthree Slider)",
+      "properties": {
+        "comparer_mode": "Slide",
+        "Node name for S&R": "Image Comparer (rgthree)"
+      },
+      "widgets_values": []
     }
   ],
   "links": [
@@ -1616,6 +1652,22 @@
       0,
       23,
       0,
+      "IMAGE"
+    ],
+    [
+      24,
+      17,
+      0,
+      24,
+      0,
+      "IMAGE"
+    ],
+    [
+      25,
+      23,
+      0,
+      24,
+      1,
       "IMAGE"
     ]
   ],

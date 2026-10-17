@@ -2,7 +2,7 @@
   "id": "ea489017-8348-485d-bda9-0eb9707384b0",
   "revision": 0,
   "last_node_id": 23,
-  "last_link_id": 35,
+  "last_link_id": 37,
   "nodes": [
     {
       "id": 1,
@@ -26,7 +26,7 @@
         "# 💎 Qwen 360 Full Quality Panorama Studio (4K Bilateral Pipeline)\n\nPristine 25-step production generation + **4K RealESRGAN 2×** + **Subtle Bilateral Cleanup**.\n\n### 🔄 Full Pipeline\n1. **Text/Image Conditioning**: Pano360 LoRA spherical backbone.\n2. **25-step Euler Sampling**: High-precision denoising for crisp architectural & landscape geometry.\n3. **4K Toroidal Upscale**: RealESRGAN 2× with 5% boundary wrap.\n4. **Subtle Bilateral Filter**: Mild d=5, sigmaColor=15 edge-preserving noise cleanup.\n5. **VR 360 Viewer & Export**: Interactive WebGL sphere viewer + Photo Sphere XMP metadata."
       ],
       "widgets_values_named": {
-        "text": "# 🌐 Qwen-Image-2.1 • Full-Quality 360° VR Panorama\n\nProduction high-fidelity spherical skybox & VR environment!\n\n• **Model**: `qwen_image_2.1_Q5_K_M.gguf` (Zero LoRAs — pure native base DiT math)\n• **QwenImage21Cache**: Prefix attention caching accelerates 25-step inference to ~60-80s on 8GB GPU!\n• **Sampler**: Native `euler` / `simple` at **25 steps**\n• **CFG Guidance Knob**: Default `1.0` (fast single-pass). You can increase to `2.0 - 3.0` to strongly amplify prompt adherence.\n• **Resolution**: Choose `1536x768` (2:1) or `1568x672` (21:9 Ultrawide), followed by instant upscale to 2K.\n• **Interactive 360 Viewer**: Drag to look around in 360°, scroll to zoom FOV, or toggle auto-rotation."
+        "text": "# 💎 Qwen 360 Full Quality Panorama Studio (4K Bilateral Pipeline)\n\nPristine 25-step production generation + **4K RealESRGAN 2×** + **Subtle Bilateral Cleanup**.\n\n### 🔄 Full Pipeline\n1. **Text/Image Conditioning**: Pano360 LoRA spherical backbone.\n2. **25-step Euler Sampling**: High-precision denoising for crisp architectural & landscape geometry.\n3. **4K Toroidal Upscale**: RealESRGAN 2× with 5% boundary wrap.\n4. **Subtle Bilateral Filter**: Mild d=5, sigmaColor=15 edge-preserving noise cleanup.\n5. **VR 360 Viewer & Export**: Interactive WebGL sphere viewer + Photo Sphere XMP metadata."
       },
       "color": "#322",
       "bgcolor": "#533"
@@ -66,6 +66,7 @@
           ]
         }
       ],
+      "title": "Unet Loader (GGUF Q5_K_M)",
       "properties": {
         "Node name for S&R": "UnetLoaderGGUF"
       },
@@ -74,8 +75,7 @@
       ],
       "widgets_values_named": {
         "unet_name": "qwen_image_2.1_Q5_K_M.gguf"
-      },
-      "title": "Unet Loader (GGUF Q5_K_M)"
+      }
     },
     {
       "id": 4,
@@ -131,6 +131,7 @@
           ]
         }
       ],
+      "title": "CLIP Loader (Qwen3-VL 8B W4A8)",
       "properties": {
         "Node name for S&R": "CLIPLoader"
       },
@@ -143,8 +144,7 @@
         "clip_name": "qwen3vl_8b_w4a8.safetensors",
         "type": "qwen_image",
         "device": "default"
-      },
-      "title": "CLIP Loader (Qwen3-VL 8B W4A8)"
+      }
     },
     {
       "id": 5,
@@ -182,6 +182,7 @@
           ]
         }
       ],
+      "title": "VAE Loader (Wan 2.2 BF16)",
       "properties": {
         "Node name for S&R": "VAELoader"
       },
@@ -190,8 +191,7 @@
       ],
       "widgets_values_named": {
         "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
-      },
-      "title": "VAE Loader (Wan 2.2 BF16)"
+      }
     },
     {
       "id": 6,
@@ -206,7 +206,7 @@
       ],
       "flags": {},
       "order": 4,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "localized_name": "image",
@@ -243,6 +243,7 @@
           "links": null
         }
       ],
+      "title": "Load Reference Photo (Center Anchor)",
       "properties": {
         "Node name for S&R": "LoadImage"
       },
@@ -253,15 +254,14 @@
       "widgets_values_named": {
         "image": "Gemini_Generated_Image_n0nhkn0nhkn0nhkn.png",
         "upload": "image"
-      },
-      "title": "Load Reference Photo (Center Anchor)"
+      }
     },
     {
       "id": 13,
       "type": "QwenPanoramaPrompt",
       "pos": [
-        1000,
-        100
+        991.4815675048828,
+        26.528804061889673
       ],
       "size": [
         420,
@@ -272,6 +272,7 @@
       "mode": 0,
       "inputs": [
         {
+          "localized_name": "scene_description",
           "name": "scene_description",
           "type": "STRING",
           "widget": {
@@ -280,6 +281,7 @@
           "link": null
         },
         {
+          "localized_name": "lighting",
           "name": "lighting",
           "type": "COMBO",
           "widget": {
@@ -288,6 +290,7 @@
           "link": null
         },
         {
+          "localized_name": "environment_type",
           "name": "environment_type",
           "type": "COMBO",
           "widget": {
@@ -296,7 +299,9 @@
           "link": null
         },
         {
+          "localized_name": "custom_details",
           "name": "custom_details",
+          "shape": 7,
           "type": "STRING",
           "widget": {
             "name": "custom_details"
@@ -304,7 +309,9 @@
           "link": null
         },
         {
+          "localized_name": "negative_prompt",
           "name": "negative_prompt",
+          "shape": 7,
           "type": "STRING",
           "widget": {
             "name": "negative_prompt"
@@ -314,6 +321,7 @@
       ],
       "outputs": [
         {
+          "localized_name": "positive_prompt",
           "name": "positive_prompt",
           "type": "STRING",
           "links": [
@@ -321,11 +329,13 @@
           ]
         },
         {
+          "localized_name": "negative_prompt",
           "name": "negative_prompt",
           "type": "STRING",
           "links": null
         },
         {
+          "localized_name": "display_info",
           "name": "display_info",
           "type": "STRING",
           "links": null
@@ -335,23 +345,21 @@
         "Node name for S&R": "QwenPanoramaPrompt"
       },
       "widgets_values": [
-        "A serene alpine lake below snow-capped peaks, evergreen forest, bright midday sun under a clear blue sky.",
-        "default",
+        "Scene: A realistic panoramic view of Alexandria, Egypt, along the Mediterranean Corniche at golden hour, featuring the seafront promenade, coastal road, palm trees, moving cars, the blue Mediterranean Sea with gentle waves, fishermen and pedestrians, and the historic Citadel of Qaitbay standing prominently on the shoreline. Include the distinct coastal atmosphere of Alexandria, soft sea breeze mood, warm sunset light reflecting on the water, elegant urban buildings along the Corniche, and seamless 360 panoramic continuity with accurate Egyptian coastal city character.",
+        "warm golden hour sunset with long shadows",
         "custom",
         "high fidelity equirectangular projection, seamless 360 horizon.",
         "blurry, low quality, distorted poles, broken seams, disfigured architecture."
       ],
       "widgets_values_named": {
-        "mode": "Full Turntable 360",
-        "camera_angle": "keep angle",
-        "camera_elevation": "eye level",
-        "include_suffix": true,
-        "custom_prefix": "an elegant egyptian queen",
-        "custom_suffix": ". The image has alpha channel and the background is transparent."
+        "scene_description": "Scene: A realistic panoramic view of Alexandria, Egypt, along the Mediterranean Corniche at golden hour, featuring the seafront promenade, coastal road, palm trees, moving cars, the blue Mediterranean Sea with gentle waves, fishermen and pedestrians, and the historic Citadel of Qaitbay standing prominently on the shoreline. Include the distinct coastal atmosphere of Alexandria, soft sea breeze mood, warm sunset light reflecting on the water, elegant urban buildings along the Corniche, and seamless 360 panoramic continuity with accurate Egyptian coastal city character.",
+        "lighting": "warm golden hour sunset with long shadows",
+        "environment_type": "custom",
+        "custom_details": "high fidelity equirectangular projection, seamless 360 horizon.",
+        "negative_prompt": "blurry, low quality, distorted poles, broken seams, disfigured architecture."
       },
       "color": "#234",
-      "bgcolor": "#345",
-      "title": "Qwen 360 Panorama Prompt"
+      "bgcolor": "#345"
     },
     {
       "id": 7,
@@ -364,8 +372,10 @@
         420,
         360
       ],
-      "flags": {},
-      "order": 12,
+      "flags": {
+        "collapsed": true
+      },
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
@@ -472,9 +482,8 @@
       "widgets_values_named": {
         "prompt": "",
         "negative_prompt": "",
-        "resolution": 768
-      },
-      "title": "Text Encode Qwen Image 2.1"
+        "resolution": 1088
+      }
     },
     {
       "id": 8,
@@ -488,7 +497,7 @@
         380
       ],
       "flags": {},
-      "order": 13,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {
@@ -580,28 +589,28 @@
           ]
         }
       ],
+      "title": "KSampler (25-Step Euler / Full Quality)",
       "properties": {
         "Node name for S&R": "KSampler"
       },
       "widgets_values": [
-        794614039977951,
+        46052238894376,
         "randomize",
         25,
-        1.0,
+        1,
         "euler",
         "simple",
-        1.0
+        1
       ],
       "widgets_values_named": {
-        "seed": 794614039977951,
+        "seed": 46052238894376,
         "control_after_generate": "randomize",
         "steps": 25,
-        "cfg": 1.0,
+        "cfg": 1,
         "sampler_name": "euler",
         "scheduler": "simple",
         "denoise": 1
-      },
-      "title": "KSampler (25-Step Euler / Full Quality)"
+      }
     },
     {
       "id": 9,
@@ -615,7 +624,7 @@
         90
       ],
       "flags": {},
-      "order": 14,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
@@ -637,44 +646,73 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            21,
-            34
+            34,
+            37
           ]
         }
       ],
       "properties": {
         "Node name for S&R": "VAEDecode"
-      },
-      "title": "VAE Decode"
+      }
     },
     {
       "id": 16,
       "type": "QwenPanorama360Viewer",
       "pos": [
-        2880,
-        100
+        2807.7203328255005,
+        47.561810619125424
       ],
       "size": [
         480,
         480
       ],
       "flags": {},
-      "order": 16,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
+          "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
           "link": 22
+        },
+        {
+          "localized_name": "default_fov",
+          "name": "default_fov",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "default_fov"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_rotate",
+          "name": "auto_rotate",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "auto_rotate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "auto_rotate_speed",
+          "name": "auto_rotate_speed",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "auto_rotate_speed"
+          },
+          "link": null
         }
       ],
       "outputs": [
         {
+          "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
-          "links": [
-            17
-          ]
+          "links": []
         }
       ],
       "title": "🌐 Interactive 360° VR Viewer",
@@ -684,10 +722,14 @@
       "widgets_values": [
         80,
         false,
-        0.5
+        0.5,
+        ""
       ],
       "widgets_values_named": {
-        "turntable_viewer_dom": ""
+        "default_fov": 80,
+        "auto_rotate": false,
+        "auto_rotate_speed": 0.5,
+        "panorama_viewer": ""
       }
     },
     {
@@ -702,7 +744,7 @@
         480
       ],
       "flags": {},
-      "order": 15,
+      "order": 16,
       "mode": 0,
       "inputs": [
         {
@@ -741,11 +783,13 @@
       "mode": 0,
       "inputs": [
         {
+          "localized_name": "images",
           "name": "images",
           "type": "IMAGE",
           "link": 24
         },
         {
+          "localized_name": "filename_prefix",
           "name": "filename_prefix",
           "type": "STRING",
           "widget": {
@@ -754,6 +798,7 @@
           "link": null
         },
         {
+          "localized_name": "format",
           "name": "format",
           "type": "COMBO",
           "widget": {
@@ -762,7 +807,9 @@
           "link": null
         },
         {
+          "localized_name": "export_rotating_video",
           "name": "export_rotating_video",
+          "shape": 7,
           "type": "BOOLEAN",
           "widget": {
             "name": "export_rotating_video"
@@ -770,7 +817,9 @@
           "link": null
         },
         {
+          "localized_name": "video_duration_seconds",
           "name": "video_duration_seconds",
+          "shape": 7,
           "type": "FLOAT",
           "widget": {
             "name": "video_duration_seconds"
@@ -778,7 +827,9 @@
           "link": null
         },
         {
+          "localized_name": "video_fps",
           "name": "video_fps",
+          "shape": 7,
           "type": "INT",
           "widget": {
             "name": "video_fps"
@@ -788,6 +839,7 @@
       ],
       "outputs": [
         {
+          "localized_name": "saved_paths",
           "name": "saved_paths",
           "type": "STRING",
           "links": null
@@ -821,25 +873,98 @@
       ],
       "size": [
         400,
-        260
+        262
       ],
       "flags": {},
-      "order": 15,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
+          "localized_name": "upscale_model",
           "name": "upscale_model",
           "type": "UPSCALE_MODEL",
-          "link": 25
+          "link": 36
         },
         {
+          "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
-          "link": 21
+          "link": 37
+        },
+        {
+          "localized_name": "seamless_boundary",
+          "name": "seamless_boundary",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "seamless_boundary"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "wrap_percent",
+          "name": "wrap_percent",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "wrap_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "processing_mode",
+          "name": "processing_mode",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "processing_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "enable_bilateral_filter",
+          "name": "enable_bilateral_filter",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "enable_bilateral_filter"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bilateral_d",
+          "name": "bilateral_d",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "bilateral_d"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bilateral_sigma_color",
+          "name": "bilateral_sigma_color",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "bilateral_sigma_color"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bilateral_sigma_space",
+          "name": "bilateral_sigma_space",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "bilateral_sigma_space"
+          },
+          "link": null
         }
       ],
       "outputs": [
         {
+          "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
           "links": [
@@ -847,16 +972,19 @@
           ]
         },
         {
+          "localized_name": "width",
           "name": "width",
           "type": "INT",
           "links": null
         },
         {
+          "localized_name": "height",
           "name": "height",
           "type": "INT",
           "links": null
         },
         {
+          "localized_name": "info",
           "name": "info",
           "type": "STRING",
           "links": null
@@ -872,8 +1000,8 @@
         "Full Frame (Best Quality)",
         false,
         5,
-        15.0,
-        4.0
+        15,
+        4
       ],
       "widgets_values_named": {
         "seamless_boundary": true,
@@ -881,8 +1009,8 @@
         "processing_mode": "Full Frame (Best Quality)",
         "enable_bilateral_filter": false,
         "bilateral_d": 5,
-        "bilateral_sigma_color": 15.0,
-        "bilateral_sigma_space": 4.0
+        "bilateral_sigma_color": 15,
+        "bilateral_sigma_space": 4
       },
       "color": "#1b4332",
       "bgcolor": "#2d6a4f"
@@ -899,7 +1027,7 @@
         82
       ],
       "flags": {},
-      "order": 2,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {
@@ -962,32 +1090,68 @@
         180
       ],
       "flags": {},
-      "order": 7,
+      "order": 6,
       "mode": 0,
-      "inputs": [],
+      "inputs": [
+        {
+          "localized_name": "resolution_preset",
+          "name": "resolution_preset",
+          "type": "COMBO",
+          "widget": {
+            "name": "resolution_preset"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_width",
+          "name": "custom_width",
+          "type": "INT",
+          "widget": {
+            "name": "custom_width"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "custom_height",
+          "name": "custom_height",
+          "type": "INT",
+          "widget": {
+            "name": "custom_height"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "batch_size",
+          "name": "batch_size",
+          "type": "INT",
+          "widget": {
+            "name": "batch_size"
+          },
+          "link": null
+        }
+      ],
       "outputs": [
         {
+          "localized_name": "latent",
           "name": "latent",
           "type": "LATENT",
           "links": [
             10
-          ],
-          "localized_name": "latent"
+          ]
         },
         {
+          "localized_name": "width",
           "name": "width",
           "type": "INT",
-          "links": null,
-          "localized_name": "width"
+          "links": null
         },
         {
+          "localized_name": "height",
           "name": "height",
           "type": "INT",
-          "links": null,
-          "localized_name": "height"
+          "links": null
         }
       ],
-      "title": "Qwen 360 Panorama Latent (2:1)",
       "properties": {
         "Node name for S&R": "QwenPanoramaLatent"
       },
@@ -998,8 +1162,9 @@
         1
       ],
       "widgets_values_named": {
-        "width": 2048,
-        "height": 1024,
+        "resolution_preset": "2048x1024 (2K VR Production 2:1)",
+        "custom_width": 2048,
+        "custom_height": 1024,
         "batch_size": 1
       }
     },
@@ -1015,7 +1180,7 @@
         106
       ],
       "flags": {},
-      "order": 2,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -1059,11 +1224,11 @@
       },
       "widgets_values": [
         "pano360_qwen21_edit_v1.safetensors",
-        1.0
+        1
       ],
       "widgets_values_named": {
         "lora_name": "pano360_qwen21_edit_v1.safetensors",
-        "strength_model": 1.0
+        "strength_model": 1
       }
     },
     {
@@ -1078,15 +1243,26 @@
         90
       ],
       "flags": {},
-      "order": 9,
+      "order": 7,
       "mode": 0,
-      "inputs": [],
+      "inputs": [
+        {
+          "localized_name": "model_name",
+          "name": "model_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "model_name"
+          },
+          "link": null
+        }
+      ],
       "outputs": [
         {
+          "localized_name": "UPSCALE_MODEL",
           "name": "UPSCALE_MODEL",
           "type": "UPSCALE_MODEL",
           "links": [
-            25
+            36
           ]
         }
       ],
@@ -1113,17 +1289,66 @@
         260
       ],
       "flags": {},
-      "order": 11,
+      "order": 14,
       "mode": 0,
       "inputs": [
         {
+          "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
           "link": 26
+        },
+        {
+          "localized_name": "d",
+          "name": "d",
+          "type": "INT",
+          "widget": {
+            "name": "d"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sigma_color",
+          "name": "sigma_color",
+          "type": "FLOAT",
+          "widget": {
+            "name": "sigma_color"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sigma_space",
+          "name": "sigma_space",
+          "type": "FLOAT",
+          "widget": {
+            "name": "sigma_space"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "blend_opacity",
+          "name": "blend_opacity",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "blend_opacity"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seamless_boundary",
+          "name": "seamless_boundary",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "seamless_boundary"
+          },
+          "link": null
         }
       ],
       "outputs": [
         {
+          "localized_name": "image",
           "name": "image",
           "type": "IMAGE",
           "links": [
@@ -1134,6 +1359,7 @@
           ]
         },
         {
+          "localized_name": "info",
           "name": "info",
           "type": "STRING",
           "links": null
@@ -1145,16 +1371,16 @@
       },
       "widgets_values": [
         5,
-        15.0,
-        4.0,
-        1.0,
+        15,
+        4,
+        1,
         true
       ],
       "widgets_values_named": {
         "d": 5,
-        "sigma_color": 15.0,
-        "sigma_space": 4.0,
-        "blend_opacity": 1.0,
+        "sigma_color": 15,
+        "sigma_space": 4,
+        "blend_opacity": 1,
         "seamless_boundary": true
       },
       "color": "#1f3a32",
@@ -1172,27 +1398,44 @@
         460
       ],
       "flags": {},
-      "order": 13,
+      "order": 18,
       "mode": 0,
       "inputs": [
         {
+          "dir": 3,
           "name": "image_a",
           "type": "IMAGE",
           "link": 34
         },
         {
+          "dir": 3,
           "name": "image_b",
           "type": "IMAGE",
           "link": 35
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "dir": 4,
+          "name": "images",
+          "shape": 3,
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
       "title": "⚖️ Compare 2K vs 4K Cleaned (rgthree Slider)",
       "properties": {
         "comparer_mode": "Slide",
         "Node name for S&R": "Image Comparer (rgthree)"
       },
-      "widgets_values": []
+      "widgets_values": [
+        []
+      ],
+      "widgets_values_named": {
+        "rgthree_comparer": {
+          "images": []
+        }
+      }
     }
   ],
   "links": [
@@ -1235,46 +1478,6 @@
       9,
       0,
       "LATENT"
-    ],
-    [
-      3,
-      4,
-      0,
-      7,
-      0,
-      "CLIP"
-    ],
-    [
-      7,
-      6,
-      0,
-      7,
-      1,
-      "IMAGE"
-    ],
-    [
-      4,
-      5,
-      0,
-      7,
-      5,
-      "VAE"
-    ],
-    [
-      13,
-      13,
-      0,
-      7,
-      6,
-      "STRING"
-    ],
-    [
-      21,
-      9,
-      0,
-      18,
-      0,
-      "IMAGE"
     ],
     [
       22,
@@ -1325,14 +1528,6 @@
       "MODEL"
     ],
     [
-      25,
-      21,
-      0,
-      18,
-      0,
-      "UPSCALE_MODEL"
-    ],
-    [
       26,
       18,
       0,
@@ -1355,10 +1550,59 @@
       23,
       1,
       "IMAGE"
+    ],
+    [
+      3,
+      4,
+      0,
+      7,
+      0,
+      "CLIP"
+    ],
+    [
+      7,
+      6,
+      0,
+      7,
+      1,
+      "IMAGE"
+    ],
+    [
+      4,
+      5,
+      0,
+      7,
+      5,
+      "VAE"
+    ],
+    [
+      13,
+      13,
+      0,
+      7,
+      6,
+      "STRING"
+    ],
+    [
+      36,
+      21,
+      0,
+      18,
+      0,
+      "UPSCALE_MODEL"
+    ],
+    [
+      37,
+      9,
+      0,
+      18,
+      1,
+      "IMAGE"
     ]
   ],
   "groups": [
     {
+      "id": 1,
       "title": "📖 Complete User Guide & Pipeline Instructions",
       "bounding": [
         -610,
@@ -1367,9 +1611,10 @@
         1050
       ],
       "color": "#3f789e",
-      "font_size": 24
+      "flags": {}
     },
     {
+      "id": 2,
       "title": "1. Model & LoRA Stack (Pano360 + Cache)",
       "bounding": [
         10,
@@ -1378,9 +1623,10 @@
         1050
       ],
       "color": "#2a363b",
-      "font_size": 24
+      "flags": {}
     },
     {
+      "id": 3,
       "title": "2. Input Reference Image & 2:1 Ratio Latent",
       "bounding": [
         480,
@@ -1389,9 +1635,10 @@
         1050
       ],
       "color": "#2a4d3b",
-      "font_size": 24
+      "flags": {}
     },
     {
+      "id": 4,
       "title": "3. 360 Panorama Prompt & Conditioning",
       "bounding": [
         970,
@@ -1400,9 +1647,10 @@
         1050
       ],
       "color": "#4a2a4d",
-      "font_size": 24
+      "flags": {}
     },
     {
+      "id": 5,
       "title": "4. Full 25-Step Euler Sampler & VAE Decode",
       "bounding": [
         1480,
@@ -1411,9 +1659,10 @@
         1050
       ],
       "color": "#4d3b2a",
-      "font_size": 24
+      "flags": {}
     },
     {
+      "id": 6,
       "title": "5. Seamless 360° VR Viewer, Preview & Export",
       "bounding": [
         1950,
@@ -1422,16 +1671,16 @@
         1050
       ],
       "color": "#2a404d",
-      "font_size": 24
+      "flags": {}
     }
   ],
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.5644739300537779,
+      "scale": 1.1,
       "offset": [
-        224.05774843473378,
-        267.5286307069977
+        -1444.069847581683,
+        -281.37846195214615
       ]
     }
   },

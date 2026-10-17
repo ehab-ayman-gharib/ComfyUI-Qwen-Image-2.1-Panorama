@@ -578,19 +578,33 @@ class QwenPanoramaModelUpscale:
         B, H, W, C = image.shape
         scale = getattr(upscale_model, "scale", 2.0)
 
+        # Neural upscale models (ESRGAN, RealESRGAN, UltraSharp) strictly expect 3-channel RGB.
+        # Extract alpha channel if present (RGBA) to prevent channel-mismatch errors in Spandrel.
+        has_alpha = C > 3
+        is_grayscale = C == 1
+        if has_alpha:
+            alpha = image[:, :, :, 3:]
+            work_image = image[:, :, :, :3]
+        elif is_grayscale:
+            alpha = None
+            work_image = image.repeat(1, 1, 1, 3)
+        else:
+            alpha = None
+            work_image = image
+
         # Step 1: Pre-pad 5% toroidal boundary if enabled
         if seamless_boundary:
             pad_w = max(16, int(round(W * wrap_percent)))
             # Align padding to 8 pixels for neural models
             pad_w = ((pad_w + 7) // 8) * 8
-            left_pad = image[:, :, -pad_w:, :]
-            right_pad = image[:, :, :pad_w, :]
-            padded = torch.cat([left_pad, image, right_pad], dim=2)
+            left_pad = work_image[:, :, -pad_w:, :]
+            right_pad = work_image[:, :, :pad_w, :]
+            padded = torch.cat([left_pad, work_image, right_pad], dim=2)
             pad_target = int(round(pad_w * scale))
             target_w = int(round(W * scale))
             target_h = int(round(H * scale))
         else:
-            padded = image
+            padded = work_image
             pad_w = 0
             pad_target = 0
             target_w = int(round(W * scale))
@@ -639,9 +653,9 @@ class QwenPanoramaModelUpscale:
                 img_np = (upscaled_cpu[b].numpy() * 255.0).clip(0, 255).astype(np.uint8)
                 if img_np.shape[-1] == 4:
                     rgb = img_np[:, :, :3]
-                    alpha = img_np[:, :, 3:]
+                    a_ch = img_np[:, :, 3:]
                     filtered_rgb = cv2.bilateralFilter(rgb, d=bilateral_d, sigmaColor=bilateral_sigma_color, sigmaSpace=bilateral_sigma_space)
-                    filtered = np.concatenate([filtered_rgb, alpha], axis=-1)
+                    filtered = np.concatenate([filtered_rgb, a_ch], axis=-1)
                 elif img_np.shape[-1] == 3:
                     filtered = cv2.bilateralFilter(img_np, d=bilateral_d, sigmaColor=bilateral_sigma_color, sigmaSpace=bilateral_sigma_space)
                 else:
@@ -655,6 +669,15 @@ class QwenPanoramaModelUpscale:
             cropped = upscaled[:, :, pad_target : pad_target + target_w, :]
         else:
             cropped = upscaled
+
+        # Re-attach alpha channel if input was RGBA
+        if has_alpha:
+            alpha_trans = alpha.permute(0, 3, 1, 2)
+            alpha_up = torch.nn.functional.interpolate(alpha_trans, size=(target_h, target_w), mode="bicubic", align_corners=False, antialias=True)
+            alpha_up = alpha_up.permute(0, 2, 3, 1).clamp(0.0, 1.0).to(cropped.device, dtype=cropped.dtype)
+            cropped = torch.cat([cropped, alpha_up], dim=-1)
+        elif is_grayscale:
+            cropped = cropped[:, :, :, :1]
 
         info_str = f"Seamless 360 {scale}x Upscaled: {W}x{H} -> {target_w}x{target_h} (RealESRGAN / Neural)"
         if enable_bilateral_filter:

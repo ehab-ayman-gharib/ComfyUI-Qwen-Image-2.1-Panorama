@@ -28,13 +28,17 @@ Tested and optimized for **8GB VRAM GPUs** (RTX 4070 Laptop) — stays strictly 
 - **Qwen 360 Panorama Latent (2:1)**: Built-in custom latent generator ensuring exact 2:1 equirectangular spherical aspect ratios and 64-channel initialization for Qwen-Image 2.1 DiT + Wan 2.2 VAE:
   - **Native Best Quality is 2K (`2048×1024`)**: Recommended for production quality, delivering razor-sharp VR skyboxes and fine landscape textures directly in latent space.
   - **Fast Draft Presets**: `1472×736`, `1536×768`, or `1024×512` for ultra-fast iteration and tight 8GB VRAM budgets.
-- **Seamless 2K & 4K VR Upscaling**: `QwenPanoramaUpscale` with 5% circular toroidal boundary wrapping (`seamless_boundary: true`) upscales native 2K panoramas to **4K Ultra VR (`4096×2048`)** (or draft renders to 2K) in seconds with zero vertical boundary seams.
+- **Integrated 4K Super-Resolution & Bilateral Denoising (Default in Main Workflows)**:
+  - Both primary workflows now automatically execute our winning end-to-end enhancement chain: **Generation &rarr; 5% Toroidal Wrap &rarr; RealESRGAN 2× &rarr; Subtle Bilateral Filter &rarr; Crop &rarr; 4K VR Output**.
+  - **🔍 RealESRGAN 2× Neural Super-Resolution**: Upscales native 2K equirectangular latents directly to pristine **4K Ultra VR (`4096×2048`)** in ~2–3 seconds while 5% circular toroidal wrapping guarantees zero vertical boundary seams.
+  - **✨ Subtle Edge-Preserving Bilateral Denoising**: Tuned filter ($d=5$, $\sigma_{\text{color}}=15$, $\sigma_{\text{space}}=4$) eliminates neural upscaler speckles, grain, and high-frequency dotted artifacts without waxy, plasticky smoothing—architectural edges, horizons, and fine silhouettes stay 100% crisp.
+  - **⚖️ Interactive 2K vs. 4K Comparison Slider**: Includes built-in `Image Comparer (rgthree)` node to inspect side-by-side or hover-wipe between the raw 2K render and the cleaned 4K panorama right inside ComfyUI.
 - **Dual Pipeline Support**:
-  - **⚡ Fast Turbo Mode (~20–30s)**: 9 steps via Viggle Turbo v0.3 LoRA & custom refined sigmas (7 turbo + 2 high-precision detail refinement steps).
-  - **💎 Full Quality Mode (< 2 min)**: 25 steps via native Euler sampler for pristine 2K VR production skyboxes.
+  - **⚡ Fast Turbo Mode (~20–30s)**: 9 steps via Viggle Turbo v0.3 LoRA & custom refined sigmas (7 turbo + 2 high-precision detail refinement steps) with seamless 4K RealESRGAN + Bilateral upscaler.
+  - **💎 Full Quality Mode (< 2 min)**: 25 steps via native Euler sampler for deep structural geometry and rich textures with seamless 4K RealESRGAN + Bilateral upscaler.
 - **Smart 360 Export**:
   - Standard Equirectangular PNG / WebP.
-  - Automatic **Google Photo Sphere XMP metadata injection** into JPEG so Facebook, Google Photos, and VR headsets auto-detect and render it as an interactive 360 sphere.
+  - Automatic **Google Photo Sphere XMP metadata injection** into JPEG and PNG so Facebook, Google Photos, and VR headsets auto-detect and render it as an interactive 360 sphere.
   - Optional rotating 360° horizontal flythrough MP4 video encoded via FFmpeg.
 
 ---
